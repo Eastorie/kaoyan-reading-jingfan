@@ -864,6 +864,7 @@
     if (!passage) return;
     const sents = getPassageSentences(passage);
     let newlyAdded = 0;
+    reportGradingAction();
 
     sents.forEach((s) => {
       const existing = state.records[s.id] || { userZh: "", submitted: false };
@@ -1376,6 +1377,9 @@
 
     saveRecords();
     renderAll();
+    if (!isPeek && trimmed) {
+      reportGradingAction();
+    }
 
     if (allDone) {
       showToast(`恭喜完成整篇精翻！综合诊断报告已生成${added ? `，新增 ${added} 项入单词本` : ""}`);
@@ -2427,6 +2431,7 @@
 
     // Dynamic on-demand loading via manifest.json
     try {
+      initGradingCounter();
       const res = await fetch("data/manifest.json");
       if (!res.ok) throw new Error("Manifest HTTP " + res.status);
       BANK_MANIFEST = await res.json();
@@ -2447,5 +2452,53 @@
     document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
+  }
+
+  const GRADE_COUNTER_URL = "https://kaoyan-reading-jingfan.internal/graded-sentence";
+  const GRADE_API = "https://events.vercount.one/api/v2/log";
+
+  function initGradingCounter() {
+    const box = document.getElementById("container_grade_pv");
+    const val = document.getElementById("value_grade_pv");
+    if (!box || !val) return;
+    const cached = localStorage.getItem("cached_grade_pv");
+    if (cached) {
+      val.textContent = cached;
+      box.style.display = "inline";
+    }
+    fetch(`${GRADE_API}?url=${encodeURIComponent(GRADE_COUNTER_URL)}`)
+      .then((r) => r.json())
+      .then((res) => {
+        if (res && res.data && typeof res.data.page_pv === "number") {
+          val.textContent = String(res.data.page_pv);
+          box.style.display = "inline";
+          localStorage.setItem("cached_grade_pv", String(res.data.page_pv));
+        }
+      })
+      .catch(() => {});
+  }
+
+  function reportGradingAction() {
+    const box = document.getElementById("container_grade_pv");
+    const val = document.getElementById("value_grade_pv");
+    let current = parseInt(val ? val.textContent : "0", 10) || 0;
+    current += 1;
+    if (val) val.textContent = String(current);
+    if (box) box.style.display = "inline";
+    localStorage.setItem("cached_grade_pv", String(current));
+
+    fetch(GRADE_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: GRADE_COUNTER_URL, isNewUv: false }),
+    })
+      .then((r) => r.json())
+      .then((res) => {
+        if (res && res.data && typeof res.data.page_pv === "number") {
+          if (val) val.textContent = String(res.data.page_pv);
+          localStorage.setItem("cached_grade_pv", String(res.data.page_pv));
+        }
+      })
+      .catch(() => {});
   }
 })();
