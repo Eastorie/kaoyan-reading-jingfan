@@ -1648,6 +1648,76 @@
     reader.readAsText(file);
   }
 
+  const STORAGE_KEY_DISCLAIMER = "kaoyan_jingfan_disclaimer_agreed_v1";
+  let countdownTimer = null;
+
+  function handleDisagreeExit() {
+    try {
+      window.close();
+    } catch (e) {}
+    document.body.innerHTML = `
+      <div style="display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px;background:#F5F7FA;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;text-align:center;">
+        <div style="max-width:500px;background:#fff;padding:40px 30px;border-radius:16px;box-shadow:0 10px 35px rgba(0,0,0,0.07);border:1px solid #E2E8F0;">
+          <div style="font-size:52px;margin-bottom:16px;">🛑</div>
+          <h2 style="font-size:20px;color:#182430;margin-bottom:12px;font-weight:700;">您已拒绝本站免责与合规声明</h2>
+          <p style="font-size:14px;color:#4A5A6A;line-height:1.75;margin-bottom:28px;">
+            根据国家互联网法规要求及本非营利开源项目的免责条款，未确认同意声明无法进入或使用本实训工具。请直接关闭当前浏览器标签页离开。
+          </p>
+          <button onclick="location.reload()" style="background:#174D83;color:#fff;border:none;padding:12px 24px;border-radius:8px;font-size:14.5px;cursor:pointer;font-weight:600;box-shadow:0 2px 8px rgba(23,77,131,0.25);">
+            重新阅读声明并进入
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  function showDisclaimerModal(isMandatory = false) {
+    const modalDisclaimer = document.getElementById("disclaimerModal");
+    if (!modalDisclaimer) return;
+    modalDisclaimer.style.display = "flex";
+
+    const btnAgree = document.getElementById("btnDisclaimerAgree");
+    const btnDisagree = document.getElementById("btnDisclaimerDisagree");
+    const closeBtn = modalDisclaimer.querySelector(".modal-close");
+
+    if (closeBtn) {
+      closeBtn.style.display = isMandatory ? "none" : "block";
+    }
+    if (btnDisagree) {
+      btnDisagree.style.display = isMandatory ? "inline-block" : "none";
+    }
+
+    if (isMandatory) {
+      let remaining = 5;
+      if (btnAgree) {
+        btnAgree.disabled = true;
+        btnAgree.textContent = `请仔细阅读声明 (${remaining}s)`;
+        btnAgree.classList.add("btn-disabled");
+      }
+      clearInterval(countdownTimer);
+      countdownTimer = setInterval(() => {
+        remaining -= 1;
+        if (remaining > 0) {
+          if (btnAgree) btnAgree.textContent = `请仔细阅读声明 (${remaining}s)`;
+        } else {
+          clearInterval(countdownTimer);
+          if (btnAgree) {
+            btnAgree.disabled = false;
+            btnAgree.textContent = "我已阅读并同意以上声明";
+            btnAgree.classList.remove("btn-disabled");
+          }
+        }
+      }, 1000);
+    } else {
+      clearInterval(countdownTimer);
+      if (btnAgree) {
+        btnAgree.disabled = false;
+        btnAgree.textContent = "我已知晓";
+        btnAgree.classList.remove("btn-disabled");
+      }
+    }
+  }
+
   function initModals() {
     const modalDisclaimer = document.getElementById("disclaimerModal");
     const modalAbout = document.getElementById("aboutModal");
@@ -1655,7 +1725,7 @@
     const btnOpenDisclaimer = document.getElementById("btnOpenDisclaimer");
     if (btnOpenDisclaimer) {
       btnOpenDisclaimer.addEventListener("click", () => {
-        if (modalDisclaimer) modalDisclaimer.style.display = "flex";
+        showDisclaimerModal(false);
       });
     }
 
@@ -1666,8 +1736,26 @@
       });
     }
 
+    const btnAgree = document.getElementById("btnDisclaimerAgree");
+    if (btnAgree) {
+      btnAgree.addEventListener("click", () => {
+        localStorage.setItem(STORAGE_KEY_DISCLAIMER, "true");
+        if (modalDisclaimer) modalDisclaimer.style.display = "none";
+        showToast("已确认合规声明，欢迎开始精翻实训！");
+      });
+    }
+
+    const btnDisagree = document.getElementById("btnDisclaimerDisagree");
+    if (btnDisagree) {
+      btnDisagree.addEventListener("click", handleDisagreeExit);
+    }
+
     document.querySelectorAll(".app-modal").forEach((m) => {
       m.addEventListener("click", (e) => {
+        const isAgreed = localStorage.getItem(STORAGE_KEY_DISCLAIMER);
+        if (m === modalDisclaimer && !isAgreed) {
+          return;
+        }
         if (
           e.target === m ||
           e.target.classList.contains("modal-backdrop") ||
@@ -1678,6 +1766,11 @@
         }
       });
     });
+
+    const hasAgreed = localStorage.getItem(STORAGE_KEY_DISCLAIMER);
+    if (!hasAgreed) {
+      showDisclaimerModal(true);
+    }
   }
 
   function renderNotebookWorkspace(container) {

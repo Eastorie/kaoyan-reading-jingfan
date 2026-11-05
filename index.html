@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>考研英语阅读逐句精翻实训与智能单词本（英一/英二 2010–2026）</title>
-  <link rel="stylesheet" href="styles.css?v=1793851373" />
+  <link rel="stylesheet" href="styles.css?v=1793853535" />
   <link rel="stylesheet" href="print.css" media="print" />
 </head>
 <body>
@@ -109,8 +109,9 @@
         <p style="margin-top:10px;"><strong>4. 数据安全与零隐私追踪</strong><br />
         本工具严格遵守《中华人民共和国个人信息保护法》(PIPL) 与最小必要原则，<strong>全站不设账号注册体系，不架设中心化用户数据库，不收集任何用户身份信息或设备追踪标识</strong>。用户的作答记录、自测分数、生词本均安全保存在用户设备本地浏览器（localStorage）。</p>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-primary btn-close-modal">我已知晓</button>
+      <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <button class="btn btn-outline" id="btnDisclaimerDisagree" style="color:var(--accent-red);border-color:rgba(185,28,28,0.35);">不同意并退出</button>
+        <button class="btn btn-primary" id="btnDisclaimerAgree" disabled style="min-width:210px;">请仔细阅读声明 (5s)</button>
       </div>
     </div>
   </div>
@@ -148,7 +149,7 @@
       document.head.appendChild(s);
     }
   </script>
-  <script src="app.js?v=1793852000"></script>
+  <script src="app.js?v=1793853535"></script>
   <script src="scroll-header.js"></script>
 </body>
 </html>

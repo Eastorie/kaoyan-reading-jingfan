@@ -1789,3 +1789,10 @@ button, input, select, textarea {
     gap: 8px;
   }
 }
+
+.btn:disabled, .btn.btn-disabled {
+  opacity: 0.55;
+  cursor: not-allowed !important;
+  pointer-events: none;
+  filter: grayscale(40%);
+}
