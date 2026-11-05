@@ -1119,43 +1119,30 @@ button, input, select, textarea {
   user-select: none;
 }
 
-.q-sent-code-hl {
-  font-family: var(--font-sans);
-  font-size: 11px;
-  color: #14532D;
-  background: #BBF7D0;
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-weight: 800;
-  margin-right: 4px;
-  user-select: none;
-  display: inline-block;
-}
-
-/* Fluorescent Highlighter Pen Effect */
+/* Fluorescent Highlighter Pen Effect - Soft Pastel Green without Front Darkening */
 .q-loc-highlighter {
-  background: linear-gradient(104deg, rgba(220, 252, 231, 0.95) 0%, rgba(187, 247, 208, 0.98) 100%);
+  background-color: #DCFCE7;
   color: #064E3B;
-  padding: 3px 6px;
-  border-radius: 4px;
+  padding: 2px 4px;
+  border-radius: 3px;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
-  box-shadow: 0 1px 3px rgba(34, 197, 94, 0.16);
-  border-left: 3.5px solid #22C55E;
+  border-left: none;
+  box-shadow: none;
   display: inline;
 }
 
-/* Key Word / Attitude / Detail Emphasis */
+/* Key Word / Attitude / Detail Emphasis - Letter Color & Underline Only, Background Unchanged */
 .q-kw-emphasis {
-  font-weight: 800;
-  color: #1E3A8A;
-  background: rgba(191, 219, 254, 0.92);
-  padding: 1px 5px;
-  border-radius: 3px;
-  box-shadow: 0 1px 2px rgba(30, 58, 138, 0.15);
-  border-bottom: 2px solid #2563EB;
-  display: inline-block;
-  line-height: 1.3;
+  font-weight: 700;
+  color: #1D4ED8;
+  background: transparent !important;
+  text-decoration: underline 2px #2563EB;
+  text-underline-offset: 3px;
+  padding: 0 1px;
+  box-shadow: none;
+  border: none;
+  display: inline;
 }
 
 .q-para-sent.dim {
@@ -1773,26 +1760,29 @@ button, input, select, textarea {
     top: auto;
     bottom: calc(72px + env(safe-area-inset-bottom));
     right: 12px;
-    padding: 5px 10px 5px 6px;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
     background: rgba(255, 255, 255, 0.96);
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    text-align: center;
   }
-  .float-prog-circle {
-    width: 28px;
-    height: 28px;
+  .floating-progress-widget .float-prog-circle {
+    display: none;
   }
-  .float-prog-circle::before {
-    width: 20px;
-    height: 20px;
-  }
-  .float-prog-num {
-    font-size: 9.5px;
+  .float-prog-text {
+    align-items: center;
   }
   .float-prog-label {
-    font-size: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--brand-navy);
+    line-height: 1.2;
   }
   .float-prog-val {
-    font-size: 11px;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--brand-navy-dark);
+    line-height: 1.2;
   }
   .trans-textarea {
     min-height: 52px;

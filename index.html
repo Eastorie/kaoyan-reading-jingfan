@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>考研英语阅读逐句精翻实训与智能单词本（英一/英二 2010–2026）</title>
-  <link rel="stylesheet" href="styles.css?v=1793870000" />
+  <link rel="stylesheet" href="styles.css?v=1793873000" />
   <link rel="stylesheet" href="print.css" media="print" />
 </head>
 <body>
@@ -12,11 +12,16 @@
   <header class="top-header">
     <div class="header-inner">
       <div class="brand-group">
-        <div class="brand-mark">精翻</div>
-        <div class="brand-titles">
-          <h1>考研英语阅读逐句精翻实训台</h1>
-          <p>英语一 / 英语二（2010–2026）全真题库 · 逐句输入智能批改 · 错词句型本 PDF 导出</p>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="brand-mark">精翻</div>
+          <div class="brand-titles">
+            <h1>考研英语阅读逐句精翻实训台</h1>
+            <p>英语一 / 英语二（2010–2026）全真题库 · 逐句输入智能批改 · 错词句型本 PDF 导出</p>
+          </div>
         </div>
+        <button class="btn-side-menu-trigger" id="btnToggleSideMenu" aria-label="菜单" title="功能与设置菜单">
+          <span>☰</span>
+        </button>
       </div>
 
       <div class="selector-group">
@@ -40,9 +45,6 @@
         </button>
         <button class="nav-tab" id="btnHeaderFeedback" title="提交题目勘误或功能建议" style="color:var(--brand-navy);border-left:1px solid var(--border-light);margin-left:6px;padding-left:14px;">
           <span>💬 问题反馈</span>
-        </button>
-        <button class="btn-side-menu-trigger" id="btnToggleSideMenu" title="打开功能与数据管理菜单" aria-label="打开功能与数据管理菜单">
-          <span>☰</span> <span>菜单</span>
         </button>
       </nav>
     </div>
@@ -281,7 +283,7 @@
   <!-- Floating Action Button for PDF Export (Active on Notebook Tab) -->
   <button class="floating-export-btn" id="btnFloatingExportPdf" style="display:none;" title="导出当前单词与句型本 A4 PDF">
     <span class="fab-icon">📄</span>
-    <span class="fab-text" id="fabExportText">导出 PDF</span>
+    <span class="fab-text">导出</span>
   </button>
 
   <!-- Modal: About Project -->
@@ -315,7 +317,7 @@
       document.write('<script src="data.js"><\/script>');
     }
   </script>
-  <script src="app.js?v=1793870000"></script>
-  <script src="scroll-header.js?v=1793870000"></script>
+  <script src="app.js?v=1793873000"></script>
+  <script src="scroll-header.js?v=1793873000"></script>
 </body>
 </html>

@@ -1085,8 +1085,8 @@
           <span class="float-prog-num">${pctVal}%</span>
         </div>
         <div class="float-prog-text">
-          <span class="float-prog-label">全文翻译进度</span>
-          <span class="float-prog-val">已译 ${doneCount} / ${sents.length} 句</span>
+          <span class="float-prog-label"><span class="desktop-only">全文翻译</span>进度</span>
+          <span class="float-prog-val"><span class="desktop-only">已译 </span>${doneCount}/${sents.length}<span class="desktop-only"> 句</span></span>
         </div>
       </div>
 
@@ -1546,7 +1546,7 @@
                 if (isLocSent) {
                   const kwList = (s.vocab || []).map((v) => ({ word: v.word, meaning: v.meaning }));
                   const highlightedEn = highlightKeywords(s.en, kwList);
-                  return `<mark class="q-loc-highlighter"><span class="q-sent-code-hl">[${s.code} 题眼定位]</span>${highlightedEn}</mark> `;
+                  return `<mark class="q-loc-highlighter"><span class="q-sent-code" style="color:#166534;font-weight:700;">[${s.code}]</span> ${highlightedEn}</mark> `;
                 } else {
                   return `<span class="q-para-sent dim"><span class="q-sent-code">[${s.code}]</span>${escHtml(s.en)} </span>`;
                 }
@@ -2665,9 +2665,6 @@
     const fabExport = document.getElementById("btnFloatingExportPdf");
     if (fabExport) {
       fabExport.style.display = state.activeTab === "notebook" ? "flex" : "none";
-      const count = getFilteredNotebook().length || state.notebook.length;
-      const fabText = document.getElementById("fabExportText");
-      if (fabText) fabText.textContent = `导出 PDF (${count})`;
     }
     renderHeaderControls();
     renderSidebar();
