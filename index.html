@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>考研英语阅读逐句精翻实训与智能单词本（英一/英二 2010–2026）</title>
-  <link rel="stylesheet" href="styles.css?v=1793873000" />
+  <link rel="stylesheet" href="styles.css?v=1793874000" />
   <link rel="stylesheet" href="print.css" media="print" />
 </head>
 <body>
@@ -179,102 +179,54 @@
     </div>
   </div>
 
-  <!-- Modal: Vocabulary Mnemonic Contextual Passage -->
-  <div id="mnemonicModal" class="app-modal" role="dialog" aria-modal="true" style="display:none;">
-    <div class="modal-backdrop"></div>
-    <div class="modal-dialog" style="max-width:680px;">
-      <div class="modal-header">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span class="drawer-brand-mark">串记</span>
-          <h3 id="mnemonicTitle">生词语境高密度串记助记短文</h3>
-        </div>
-        <button class="modal-close" aria-label="关闭">&times;</button>
-      </div>
-      <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
-        <p style="font-size:13px;color:var(--ink-secondary);line-height:1.55;">
-          将您个人生词本中的重点薄弱词汇自动串联编织为考研真题同源题材的易记短文，利用语境情节实现高密度深度记忆。
-        </p>
-        <div id="mnemonicContent"></div>
-      </div>
-      <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-sm btn-outline" id="btnMnemonicSpeak">🔊 朗读短文</button>
-          <button class="btn btn-sm btn-outline" id="btnMnemonicCopy">📋 复制短文</button>
-          <button class="btn btn-sm btn-outline" id="btnMnemonicReroll">🎲 换个语境场景</button>
-        </div>
-        <button class="btn btn-sm btn-primary btn-close-modal">完成</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Side Drawer Menu (Backup, Restore, Tools) -->
+  <!-- Side Drawer Menu (Minimalist Utility Menu) -->
   <div id="sideDrawerMenu" class="side-drawer" role="dialog" aria-modal="true" style="display:none;">
     <div class="drawer-backdrop" id="drawerBackdrop"></div>
     <aside class="drawer-panel">
       <div class="drawer-header">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span class="drawer-brand-mark">精翻</span>
-          <h3>侧栏功能菜单</h3>
-        </div>
+        <h3 class="drawer-title">菜单与设置</h3>
         <button class="drawer-close" id="btnCloseDrawer" aria-label="关闭">&times;</button>
       </div>
       <div class="drawer-body">
-        <!-- Section 1: 生词强化记忆 -->
+        <!-- Section 1: 学习数据 -->
         <div class="drawer-section">
-          <h4 class="drawer-sec-title">📖 生词强化记忆</h4>
-          <button class="drawer-item-btn primary" id="btnDrawerMnemonic">
-            <span>✨ 生词语境串记短文</span>
-            <span class="drawer-badge">高密度助记</span>
-          </button>
-          <button class="drawer-item-btn" id="btnDrawerExportPdf">
-            <span>📄 导出生词本 A4 打印 PDF</span>
-          </button>
-        </div>
-
-        <!-- Section 2: 学习数据管理 -->
-        <div class="drawer-section">
-          <h4 class="drawer-sec-title">💾 学习数据管理</h4>
+          <div class="drawer-sec-title">学习数据</div>
           <button class="drawer-item-btn" id="btnDrawerExportBackup">
-            <span>📥 备份全部学习记录 (JSON)</span>
+            <span class="item-icon">📥</span>
+            <span>备份学习记录 (JSON)</span>
           </button>
           <button class="drawer-item-btn" id="btnDrawerImportBackup">
-            <span>📤 导入恢复本地备份 (JSON)</span>
+            <span class="item-icon">📤</span>
+            <span>导入恢复备份 (JSON)</span>
           </button>
           <input type="file" id="drawerRestoreFileInput" accept=".json" style="display:none;" />
           <button class="drawer-item-btn danger" id="btnDrawerClearAll">
-            <span>🗑️ 清空所有作答与生词记录</span>
+            <span class="item-icon">🗑️</span>
+            <span>清空所有本地数据</span>
           </button>
         </div>
 
-        <!-- Section 3: 实训快捷操作 -->
-        <div class="drawer-section">
-          <h4 class="drawer-sec-title">⚡ 当前篇章快捷操作</h4>
-          <button class="drawer-item-btn" id="btnDrawerFinish">
-            <span>🚀 整篇交卷与综合诊断</span>
-          </button>
-          <button class="drawer-item-btn" id="btnDrawerDemoFill">
-            <span>💡 填入模拟作答（体验批改）</span>
-          </button>
-          <button class="drawer-item-btn" id="btnDrawerResetPassage">
-            <span>🔄 重置当前篇章作答</span>
-          </button>
-          <button class="drawer-item-btn" id="btnDrawerRevealAll">
-            <span>👁️ 展开全部参考精译</span>
-          </button>
-        </div>
+        <div class="drawer-divider"></div>
 
-        <!-- Section 4: 项目与支持 -->
+        <!-- Section 2: 关于与支持 -->
         <div class="drawer-section">
-          <h4 class="drawer-sec-title">ℹ️ 项目与合规</h4>
+          <div class="drawer-sec-title">关于与支持</div>
           <button class="drawer-item-btn" id="btnDrawerFeedback">
-            <span>🚩 问题反馈与勘误提交</span>
+            <span class="item-icon">💬</span>
+            <span>问题反馈与勘误</span>
           </button>
           <button class="drawer-item-btn" id="btnDrawerDisclaimer">
-            <span>⚖️ 版权与合规免责声明</span>
+            <span class="item-icon">⚖️</span>
+            <span>版权与合规声明</span>
           </button>
           <button class="drawer-item-btn" id="btnDrawerAbout">
-            <span>📌 关于本实训台</span>
+            <span class="item-icon">📌</span>
+            <span>关于本实训台</span>
           </button>
+          <a href="https://github.com/Eastorie/kaoyan-reading-jingfan" target="_blank" rel="noopener noreferrer" class="drawer-item-btn" style="text-decoration:none;">
+            <span class="item-icon">⭐</span>
+            <span>GitHub 开源仓库</span>
+          </a>
         </div>
       </div>
     </aside>
@@ -317,7 +269,7 @@
       document.write('<script src="data.js"><\/script>');
     }
   </script>
-  <script src="app.js?v=1793873000"></script>
-  <script src="scroll-header.js?v=1793873000"></script>
+  <script src="app.js?v=1793874000"></script>
+  <script src="scroll-header.js?v=1793874000"></script>
 </body>
 </html>
