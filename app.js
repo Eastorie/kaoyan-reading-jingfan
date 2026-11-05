@@ -1209,14 +1209,14 @@
             return `
               <div class="opt-item ${cls}" data-qkey="${qKey}" data-letter="${letter}">
                 <div style="display:flex;justify-content:space-between;gap:8px;font-weight:600;color:var(--ink-primary);">
-                  <span><strong>[${letter}]</strong> ${escHtml(opt[0])}</span>
+                  <span><strong>[${letter}]</strong> ${escHtml(opt.en || opt[0] || "")}</span>
                   ${picked && letter === q.answer ? `<span style="color:var(--accent-green);font-size:12px;">✓ 正确选项</span>` : ""}
                 </div>
                 ${
                   picked
                     ? `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--border-light);font-size:13px;color:var(--ink-secondary);">
-                        <div><strong>选项译文：</strong>${escHtml(opt[1])}</div>
-                        <div style="margin-top:2px;color:${letter === q.answer ? "var(--accent-green)" : "var(--ink-muted)"};"><strong>命题意图解析：</strong>${escHtml(opt[2])}</div>
+                        <div><strong>选项译文：</strong>${escHtml(opt.zh || opt[1] || "")}</div>
+                        <div style="margin-top:2px;color:${letter === q.answer ? "var(--accent-green)" : "var(--ink-muted)"};"><strong>命题意图解析：</strong>${escHtml(opt.reason || opt[2] || "")}</div>
                       </div>`
                     : ""
                 }
