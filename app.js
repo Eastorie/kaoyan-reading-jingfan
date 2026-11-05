@@ -764,10 +764,20 @@
       progCard.innerHTML = `
         <div class="progress-header">
           <span>本篇精翻进度</span>
-          <span style="color:var(--brand-navy);">${doneSents.length} / ${sents.length} 句 (${pct}%)</span>
+          <span style="color:var(--brand-navy);font-weight:700;">${doneSents.length} / ${sents.length} 句 (${pct}%)</span>
         </div>
         <div class="progress-bar-track">
           <div class="progress-bar-fill" style="width:${pct}%"></div>
+        </div>
+        <!-- Practical Translation Controls in Sidebar -->
+        <div style="margin:12px 0 10px;padding:10px 12px;background:var(--bg-subtle);border-radius:var(--radius-sm);display:flex;flex-direction:column;gap:8px;">
+          <label style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-secondary);cursor:pointer;">
+            <input type="checkbox" id="chkAutoCollectSide" ${state.autoCollectWeak ? "checked" : ""} />
+            自动收录薄弱词句
+          </label>
+          <button class="btn btn-sm btn-outline" id="btnRevealAllSide" style="width:100%;font-size:12px;padding:5px;">
+            展开全部参考答案
+          </button>
         </div>
         <div class="sent-grid-nav">
           ${sents
@@ -805,6 +815,22 @@
           if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
         });
       });
+
+      const chkAutoSide = progCard.querySelector("#chkAutoCollectSide");
+      if (chkAutoSide) {
+        chkAutoSide.addEventListener("change", (e) => {
+          state.autoCollectWeak = e.target.checked;
+          saveUi();
+          showToast(state.autoCollectWeak ? "已开启自动收录薄弱词句" : "已关闭自动收录");
+        });
+      }
+
+      const btnRevealSide = progCard.querySelector("#btnRevealAllSide");
+      if (btnRevealSide) {
+        btnRevealSide.addEventListener("click", () => {
+          handleFinishWholePassage();
+        });
+      }
 
       const btnFinish = document.getElementById("btnFinishPassage");
       if (btnFinish) {
@@ -1064,38 +1090,9 @@
         </div>
       </div>
 
-      <div class="workspace-toolbar">
-        <div class="toolbar-left">
-          <strong style="color:var(--brand-navy);">逐句精翻实训</strong>
-          <span class="desktop-only" style="font-size:13px;color:var(--ink-secondary);">：原句下方输入译文，提交即可对照逐块采分点与评分。</span>
-        </div>
-        <div class="toolbar-right">
-          <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-secondary);cursor:pointer;">
-            <input type="checkbox" id="chkAutoCollect" ${state.autoCollectWeak ? "checked" : ""} />
-            自动收录薄弱词句
-          </label>
-          <button class="btn btn-sm btn-outline" id="btnRevealAll">全部参考</button>
-        </div>
-      </div>
       ${reportHtml}
       ${paragraphsHtml}
     `;
-
-    // Bind toolbar events
-    const chkAuto = document.getElementById("chkAutoCollect");
-    if (chkAuto) {
-      chkAuto.addEventListener("change", (e) => {
-        state.autoCollectWeak = e.target.checked;
-        saveUi();
-      });
-    }
-
-    const btnRevealAll = document.getElementById("btnRevealAll");
-    if (btnRevealAll) {
-      btnRevealAll.addEventListener("click", () => {
-        handleFinishWholePassage();
-      });
-    }
 
     const btnCollectAll = document.getElementById("btnCollectAllPassageWeak");
     if (btnCollectAll) {
@@ -2039,6 +2036,158 @@
       btnDisagree.addEventListener("click", handleDisagreeExit);
     }
 
+    // Side Drawer Menu Event Bindings
+    const drawer = document.getElementById("sideDrawerMenu");
+    const btnToggleMenu = document.getElementById("btnToggleSideMenu");
+    const btnCloseDrawer = document.getElementById("btnCloseDrawer");
+    const drawerBackdrop = document.getElementById("drawerBackdrop");
+
+    function openDrawer() {
+      if (drawer) drawer.style.display = "flex";
+    }
+    function closeDrawer() {
+      if (drawer) drawer.style.display = "none";
+    }
+
+    if (btnToggleMenu) btnToggleMenu.addEventListener("click", openDrawer);
+    if (btnCloseDrawer) btnCloseDrawer.addEventListener("click", closeDrawer);
+    if (drawerBackdrop) drawerBackdrop.addEventListener("click", closeDrawer);
+
+    document.getElementById("btnDrawerMnemonic")?.addEventListener("click", () => {
+      closeDrawer();
+      showMnemonicModal();
+    });
+    document.getElementById("btnDrawerExportPdf")?.addEventListener("click", () => {
+      closeDrawer();
+      handleExportPdf();
+    });
+    document.getElementById("btnDrawerExportBackup")?.addEventListener("click", () => {
+      closeDrawer();
+      exportBackupData();
+    });
+    const drawerFileInput = document.getElementById("drawerRestoreFileInput");
+    document.getElementById("btnDrawerImportBackup")?.addEventListener("click", () => {
+      drawerFileInput?.click();
+    });
+    if (drawerFileInput) {
+      drawerFileInput.addEventListener("change", (e) => {
+        if (e.target.files && e.target.files[0]) {
+          importBackupData(e.target.files[0]);
+          drawerFileInput.value = "";
+          closeDrawer();
+        }
+      });
+    }
+    document.getElementById("btnDrawerClearAll")?.addEventListener("click", () => {
+      closeDrawer();
+      if (confirm("确定要清空全部做题记录与生词本数据吗？建议提前备份。")) {
+        state.records = {};
+        state.notebook = [];
+        state.qAnswers = {};
+        saveRecords();
+        saveNotebook();
+        saveQAnswers();
+        renderAll();
+        showToast("已清空本地记录与生词本");
+      }
+    });
+    document.getElementById("btnDrawerFinish")?.addEventListener("click", () => {
+      closeDrawer();
+      handleFinishWholePassage();
+    });
+    document.getElementById("btnDrawerDemoFill")?.addEventListener("click", () => {
+      closeDrawer();
+      handleFillDemoTranslations();
+    });
+    document.getElementById("btnDrawerResetPassage")?.addEventListener("click", () => {
+      closeDrawer();
+      const passage = getCurrentPassage();
+      if (passage) {
+        getPassageSentences(passage).forEach((s) => delete state.records[s.id]);
+        state.showReport = false;
+        saveRecords();
+        renderAll();
+        showToast("已重置本篇记录");
+      }
+    });
+    document.getElementById("btnDrawerRevealAll")?.addEventListener("click", () => {
+      closeDrawer();
+      handleFinishWholePassage();
+    });
+    document.getElementById("btnDrawerFeedback")?.addEventListener("click", () => {
+      closeDrawer();
+      openFeedbackModal();
+    });
+    document.getElementById("btnDrawerDisclaimer")?.addEventListener("click", () => {
+      closeDrawer();
+      showDisclaimerModal(false);
+    });
+    document.getElementById("btnDrawerAbout")?.addEventListener("click", () => {
+      closeDrawer();
+      if (modalAbout) modalAbout.style.display = "flex";
+    });
+
+    // Floating Action Button
+    const fab = document.getElementById("btnFloatingExportPdf");
+    if (fab && !fab._bound) {
+      fab._bound = true;
+      fab.addEventListener("click", () => handleExportPdf());
+    }
+
+    // Mnemonic Modal Action Buttons
+    const btnSpeak = document.getElementById("btnMnemonicSpeak");
+    if (btnSpeak) {
+      btnSpeak.addEventListener("click", () => {
+        if (!("speechSynthesis" in window)) {
+          showToast("您的浏览器暂不支持语音朗读");
+          return;
+        }
+        if (window.speechSynthesis.speaking) {
+          window.speechSynthesis.cancel();
+          btnSpeak.textContent = "🔊 朗读短文";
+          showToast("已停止朗读");
+          return;
+        }
+        if (!currentMnemonicPassage || !currentMnemonicPassage.fullEn) return;
+        const utter = new SpeechSynthesisUtterance(currentMnemonicPassage.fullEn);
+        utter.lang = "en-US";
+        utter.rate = 0.95;
+        utter.onend = () => {
+          btnSpeak.textContent = "🔊 朗读短文";
+        };
+        utter.onerror = () => {
+          btnSpeak.textContent = "🔊 朗读短文";
+        };
+        btnSpeak.textContent = "⏹️ 停止朗读";
+        window.speechSynthesis.speak(utter);
+        showToast("正在朗读生词串记短文...");
+      });
+    }
+
+    const btnCopyMn = document.getElementById("btnMnemonicCopy");
+    if (btnCopyMn) {
+      btnCopyMn.addEventListener("click", () => {
+        if (!currentMnemonicPassage) return;
+        const text = `【考研生词高密度串记 · ${currentMnemonicPassage.themeName}】\n\n${currentMnemonicPassage.fullEn}\n\n【中文全译】：\n${currentMnemonicPassage.fullZh}\n\n【生词清单】：\n${currentMnemonicPassage.words.map((w) => `${w.term}：${w.meaning || w.context_zh}`).join("\n")}`;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => {
+            showToast("已成功复制生词串记短文与译文！");
+          });
+        } else {
+          showToast("已复制！");
+        }
+      });
+    }
+
+    const btnReroll = document.getElementById("btnMnemonicReroll");
+    if (btnReroll) {
+      btnReroll.addEventListener("click", () => {
+        currentMnemonicThemeIndex++;
+        showMnemonicModal(currentMnemonicThemeIndex);
+        showToast("已切换到新的语境场景！");
+      });
+    }
+
     document.querySelectorAll(".app-modal").forEach((m) => {
       m.addEventListener("click", (e) => {
         const isAgreed = localStorage.getItem(STORAGE_KEY_DISCLAIMER);
@@ -2130,19 +2279,12 @@
       <section class="notebook-header-card">
         <div>
           <h2>${escHtml(state.exam)} · 错词与句型本</h2>
-          <p>自动汇集逐句精翻中未译出、翻译偏差的核心词汇短语与长难句型，支持一键导出 A4 打印 PDF</p>
+          <p>自动汇集逐句精翻中未译出、翻译偏差的核心词汇短语与长难句型（导出 PDF 请点击右下角悬浮按钮，备份与恢复见侧栏菜单）</p>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;" class="no-print">
-          <button class="btn btn-amber" id="btnExportPdfMain" style="font-size:14px;padding:8px 16px;">
-            📄 导出 PDF (${filtered.length || state.notebook.length} 条)
+          <button class="btn btn-amber" id="btnOpenMnemonicModal" style="font-size:14px;padding:8px 16px;">
+            ✨ 生词高密度串记短文
           </button>
-          <button class="btn btn-outline" id="btnExportBackup" style="background:rgba(255,255,255,0.12);color:#fff;border-color:rgba(255,255,255,0.3);">
-            📥 备份 (JSON)
-          </button>
-          <button class="btn btn-outline" id="btnImportBackup" style="background:rgba(255,255,255,0.12);color:#fff;border-color:rgba(255,255,255,0.3);">
-            📤 恢复
-          </button>
-          <input type="file" id="inputRestoreBackupFile" accept=".json" style="display:none;" />
           <button class="btn btn-outline" id="btnShowAddCustom" style="background:rgba(255,255,255,0.12);color:#fff;border-color:rgba(255,255,255,0.3);">
             + 添加
           </button>
@@ -2210,6 +2352,11 @@
 
     const btnExport = document.getElementById("btnExportPdfMain");
     if (btnExport) btnExport.addEventListener("click", handleExportPdf);
+
+    const btnOpenMn = document.getElementById("btnOpenMnemonicModal");
+    if (btnOpenMn) {
+      btnOpenMn.addEventListener("click", () => showMnemonicModal());
+    }
 
     const btnShowCustom = document.getElementById("btnShowAddCustom");
     const customBox = document.getElementById("customAddBox");
@@ -2316,23 +2463,197 @@
         }
       });
     }
+  }
 
-    const btnExportBk = document.getElementById("btnExportBackup");
-    if (btnExportBk) {
-      btnExportBk.addEventListener("click", exportBackupData);
+  // =========================================================================
+  // Mnemonic Passage Generator Engine (Vocabulary High-Density Stories)
+  // =========================================================================
+  let currentMnemonicThemeIndex = 0;
+  let currentMnemonicPassage = null;
+
+  function generateMnemonicPassage(vocabList, themeIdx = 0) {
+    let words = (vocabList || []).filter((v) => v.term && String(v.term).trim().length > 1);
+    if (words.length === 0) {
+      words = [
+        { term: "justified", meaning: "事出有因的，合理的" },
+        { term: "pioneering", meaning: "开创性的，先锋的" },
+        { term: "common knowledge", meaning: "公认常识" },
+        { term: "helpless", meaning: "束手无策的" },
+        { term: "accountability", meaning: "责任制，问责" },
+        { term: "ambiguity", meaning: "模棱两可，不明确" },
+        { term: "deteriorate", meaning: "恶化，退化" },
+        { term: "inevitable", meaning: "不可避免的" },
+      ];
     }
 
-    const btnImportBk = document.getElementById("btnImportBackup");
-    const inputRestore = document.getElementById("inputRestoreBackupFile");
-    if (btnImportBk && inputRestore) {
-      btnImportBk.addEventListener("click", () => inputRestore.click());
-      inputRestore.addEventListener("change", (e) => {
-        if (e.target.files && e.target.files[0]) {
-          importBackupData(e.target.files[0]);
-          inputRestore.value = "";
-        }
-      });
+    const targetWords = words.slice(0, 8);
+    const themes = [
+      {
+        name: "学术探索与认知觉醒",
+        generator: (w) => [
+          {
+            en: `In contemporary academic exploration, scholars frequently discover that assumptions once taken for granted may not always be ${w(0)}.`,
+            zh: `在当代学术探索中，学者们屡屡发现，一度被视作理所当然的前提假设未必始终【${w(0)}】。`,
+          },
+          {
+            en: `When progressive researchers embark on ${w(1)} investigations, they often realize what society claims as truth is merely ${w(2)}.`,
+            zh: `当锐意进取的学者开展【${w(1)}】探索时，他们常意识到，社会奉若真理的说法往往不过是【${w(2)}】。`,
+          },
+          {
+            en: `Faced with unforeseen empirical contradictions, even experienced specialists might temporarily feel completely ${w(3)}.`,
+            zh: `面对未曾预料的实证矛盾，即便是经验老到的专家也可能一时感到彻底【${w(3)}】。`,
+          },
+          {
+            en: `To eliminate conceptual ${w(4)} and prevent institutional practices from starting to ${w(5)}, reformers must establish rigorous ${w(6)}.`,
+            zh: `为了消除概念层面的【${w(4)}】，防止体制运行走向【${w(5)}】，改革者必须建立起严格的【${w(6)}】。`,
+          },
+          {
+            en: `In the long run, critical self-reflection is ${w(7)} for genuine intellectual and social advancement.`,
+            zh: `长远来看，批判性的反躬自省对于实现真正的学术思想与社会进步而言是【${w(7)}】的。`,
+          },
+        ],
+      },
+      {
+        name: "青年奋斗与技能破局",
+        generator: (w) => [
+          {
+            en: `Many ambitious graduates feel their personal aspirations are only ${w(0)} when validated by conventional status symbols.`,
+            zh: `许多雄心勃勃的大学毕业生觉得，个人的抱负唯有得到传统名利光环的背书才算【${w(0)}】。`,
+          },
+          {
+            en: `However, courageous innovators choose ${w(1)} career paths, daring to question outdated norms that have long masqueraded as ${w(2)}.`,
+            zh: `然而，勇敢的革新者毅然选择【${w(1)}】职业路径，敢于质疑长期披着【${w(2)}】外衣的陈腐观念。`,
+          },
+          {
+            en: `Without hands-on mastery, even brilliant theorists become utterly ${w(3)} when confronting tangible industrial crises.`,
+            zh: `倘若缺乏动手实践的深厚功底，即便是才思敏捷的理论家在直面具体的产业危机时也会变得彻底【${w(3)}】。`,
+          },
+          {
+            en: `By dispelling the paralyzing ${w(4)} of modern career paths and preventing their vital skills from beginning to ${w(5)}, youth take personal ${w(6)}.`,
+            zh: `青年人唯有驱散职业发展中的迷茫与【${w(4)}】，阻止个人专业技能走向【${w(5)}】，勇敢挑起自身的【${w(6)}】。`,
+          },
+          {
+            en: `Such dedication makes ultimate career success virtually ${w(7)} in an increasingly demanding competitive era.`,
+            zh: `正是这种倾情投入，令他们在竞争日益严苛的新时代里，走向最终的职业成功能够成为一种【${w(7)}】。`,
+          },
+        ],
+      },
+      {
+        name: "现代社会思辨与决策",
+        generator: (w) => [
+          {
+            en: `Public debates over emerging technological transformations have become increasingly intense, though not every collective anxiety is ${w(0)}.`,
+            zh: `公众围绕新兴技术变革的争辩日趋激烈，尽管并非每一种群体的焦虑都是【${w(0)}】的。`,
+          },
+          {
+            en: `As tech pioneers venture into ${w(1)} territories, ordinary citizens often cling defensively to familiar ${w(2)}.`,
+            zh: `随着科技先锋挺进【${w(1)}】领域，普通大众往往带着防备心理固守于他们熟悉的【${w(2)}】。`,
+          },
+          {
+            en: `When complex algorithms malfunction without transparent oversight, regulatory authorities find themselves strangely ${w(3)}.`,
+            zh: `当复杂的算法因缺乏透明监管而失控失准时，监管部门反倒发现自己处于奇怪的【${w(3)}】境地。`,
+          },
+          {
+            en: `Resolving this ethical ${w(4)} before institutional trust begins to ${w(5)} demands transparent legal ${w(6)}.`,
+            zh: `在制度公信力发生【${w(5)}】之前化解这一伦理【${w(4)}】，需要确立公开透明的法律【${w(6)}】。`,
+          },
+          {
+            en: `Ultimately, harmonizing innovation with human welfare remains an ${w(7)} historical mission for our generation.`,
+            zh: `归根到底，让科技创新与人类福祉同频共振，是我们这一代人【${w(7)}】的历史使命。`,
+          },
+        ],
+      },
+    ];
+
+    const currentTheme = themes[themeIdx % themes.length];
+    const wTerm = (i) => targetWords[i % targetWords.length].term;
+    const wMean = (i) => {
+      const item = targetWords[i % targetWords.length];
+      return `${item.term}（${item.meaning || item.context_zh || "重点词"}）`;
+    };
+
+    const sents = currentTheme.generator(wTerm);
+    const zhSents = currentTheme.generator(wMean).map((x) => x.zh);
+
+    return {
+      themeName: currentTheme.name,
+      words: targetWords,
+      pairs: sents.map((s, idx) => ({
+        en: s.en,
+        zh: zhSents[idx],
+      })),
+      fullEn: sents.map((s) => s.en).join(" "),
+      fullZh: zhSents.join(" "),
+    };
+  }
+
+  function showMnemonicModal(themeIndex = currentMnemonicThemeIndex) {
+    const modal = document.getElementById("mnemonicModal");
+    const container = document.getElementById("mnemonicContent");
+    const titleEl = document.getElementById("mnemonicTitle");
+    if (!modal || !container) return;
+
+    const filtered = getFilteredNotebook();
+    const sourceWords = filtered.length > 0 ? filtered : state.notebook;
+    const passageData = generateMnemonicPassage(sourceWords, themeIndex);
+    currentMnemonicPassage = passageData;
+
+    if (titleEl) {
+      titleEl.textContent = `生词语境高密度串记 · ${passageData.themeName}`;
     }
+
+    const kwMap = passageData.words.map((w) => ({ word: w.term, meaning: w.meaning || w.context_zh || "核心生词" }));
+
+    const pairsHtml = passageData.pairs
+      .map(
+        (p, idx) => `
+      <div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--border-light);">
+        <div style="font-family:var(--font-serif-en);font-size:15px;line-height:1.75;color:#1E293B;margin-bottom:4px;">
+          <strong style="color:var(--brand-navy);font-size:12px;margin-right:4px;">[${idx + 1}]</strong>${highlightKeywords(p.en, kwMap)}
+        </div>
+        <div style="font-family:var(--font-serif-zh);font-size:13.5px;line-height:1.7;color:var(--ink-secondary);">
+          ${escHtml(p.zh)}
+        </div>
+      </div>
+    `
+      )
+      .join("");
+
+    const termsHtml = passageData.words
+      .map(
+        (w) => `
+      <div class="mnemonic-term-chip">
+        <div><strong>${escHtml(w.term)}</strong></div>
+        <div style="color:var(--ink-secondary);font-size:12px;">${escHtml(w.meaning || w.context_zh || "考点生词")}</div>
+        ${w.source ? `<div style="font-size:11px;color:var(--ink-muted);">${escHtml(w.source)}</div>` : ""}
+      </div>
+    `
+      )
+      .join("");
+
+    container.innerHTML = `
+      <div class="mnemonic-box">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:6px;">
+          <span class="q-hl-tag">✨ ${escHtml(passageData.themeName)}（已融入 ${passageData.words.length} 个重点生词）</span>
+          <span style="font-size:12px;color:var(--ink-muted);">高密度语境链式记忆</span>
+        </div>
+        
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          ${pairsHtml}
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--brand-navy);margin-bottom:8px;">
+          🎯 本次串记生词清单（${passageData.words.length} 词）：
+        </div>
+        <div class="mnemonic-term-grid">
+          ${termsHtml}
+        </div>
+      </div>
+    `;
+
+    modal.style.display = "flex";
   }
 
   function renderAll() {
@@ -2340,6 +2661,13 @@
     const mainContainer = document.querySelector(".main-container");
     if (mainContainer) {
       mainContainer.classList.toggle("tab-notebook", state.activeTab === "notebook");
+    }
+    const fabExport = document.getElementById("btnFloatingExportPdf");
+    if (fabExport) {
+      fabExport.style.display = state.activeTab === "notebook" ? "flex" : "none";
+      const count = getFilteredNotebook().length || state.notebook.length;
+      const fabText = document.getElementById("fabExportText");
+      if (fabText) fabText.textContent = `导出 PDF (${count})`;
     }
     renderHeaderControls();
     renderSidebar();
