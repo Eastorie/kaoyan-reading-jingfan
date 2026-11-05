@@ -21,6 +21,68 @@
     notebook: [], // [{ id, kind: 'vocab'|'pattern', term, meaning, context_zh, source, reason, en, zh, user_zh, note, mastered }]
   };
 
+  // Seamless historical data migration helper
+  // Ensures compatibility across version upgrades without losing existing user answers
+  function migrateHistoricalKeys() {
+    let dirty = false;
+
+    // 1. Migrate records: from '2015-T1-P1-S1' to '2015-E2-T1-P1-S1'
+    if (state.records && typeof state.records === "object") {
+      const oldKeys = Object.keys(state.records);
+      oldKeys.forEach((k) => {
+        const m = k.match(/^(\d{4})-(T\d+-P\d+-S\d+)$/);
+        if (m) {
+          const newK = `${m[1]}-E2-${m[2]}`;
+          if (!state.records[newK]) {
+            state.records[newK] = state.records[k];
+          }
+          dirty = true;
+        }
+      });
+    }
+
+    // 2. Migrate qAnswers: from '2015-T1-Q21' to '2015-E2-T1-Q21'
+    if (state.qAnswers && typeof state.qAnswers === "object") {
+      const oldQKeys = Object.keys(state.qAnswers);
+      oldQKeys.forEach((k) => {
+        const m = k.match(/^(\d{4})-(T\d+-Q\d+)$/);
+        if (m) {
+          const newK = `${m[1]}-E2-${m[2]}`;
+          if (!state.qAnswers[newK]) {
+            state.qAnswers[newK] = state.qAnswers[k];
+          }
+          dirty = true;
+        }
+      });
+    }
+
+    // 3. Migrate notebook item ids and sentIds
+    if (Array.isArray(state.notebook)) {
+      state.notebook.forEach((item) => {
+        if (item.sentId) {
+          const m = item.sentId.match(/^(\d{4})-(T\d+-P\d+-S\d+)$/);
+          if (m) {
+            item.sentId = `${m[1]}-E2-${m[2]}`;
+            dirty = true;
+          }
+        }
+        if (item.id && !item.id.includes("-E1-") && !item.id.includes("-E2-")) {
+          item.id = item.id.replace(
+            /(::)(\d{4})-(T\d+-P\d+-S\d+)$/,
+            `$1$2-E2-$3`
+          );
+          dirty = true;
+        }
+      });
+    }
+
+    if (dirty) {
+      saveRecords();
+      saveQAnswers();
+      saveNotebook();
+    }
+  }
+
   function loadStorage() {
     try {
       const savedRecords = localStorage.getItem(STORAGE_KEY_RECORDS);
@@ -37,6 +99,7 @@
         if (ui.textId) state.textId = ui.textId;
         if (typeof ui.autoCollectWeak === "boolean") state.autoCollectWeak = ui.autoCollectWeak;
       }
+      migrateHistoricalKeys();
     } catch (e) {
       console.warn("Failed to load state from localStorage:", e);
     }
@@ -1270,7 +1333,8 @@
 
     const qCards = (passage.questions || [])
       .map((q) => {
-        const qKey = `${state.year}-T${passage.id}-Q${q.n}`;
+        const examTag = (state.exam && state.exam.includes("一")) ? "E1" : "E2";
+        const qKey = `${state.year}-${examTag}-T${passage.id}-Q${q.n}`;
         const picked = state.qAnswers[qKey];
         const letters = ["A", "B", "C", "D"];
 
