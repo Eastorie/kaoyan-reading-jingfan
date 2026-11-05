@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>考研英语阅读逐句精翻实训与智能单词本（英一/英二 2010–2026）</title>
-  <link rel="stylesheet" href="styles.css?v=1793853535" />
+  <link rel="stylesheet" href="styles.css?v=1793854983" />
   <link rel="stylesheet" href="print.css" media="print" />
 </head>
 <body>
@@ -37,6 +37,9 @@
         <button class="nav-tab" data-tab="notebook">
           <span>04 单词与句型本</span>
           <span id="nbCountBadge" class="badge-count">0</span>
+        </button>
+        <button class="nav-tab" id="btnHeaderFeedback" title="提交题目勘误或功能建议" style="color:var(--brand-navy);border-left:1px solid var(--border-light);margin-left:6px;padding-left:14px;">
+          <span>💬 问题反馈</span>
         </button>
       </nav>
     </div>
@@ -79,6 +82,8 @@
         <span>本地存储 · 零个人信息采集</span>
       </div>
       <div class="footer-links">
+        <button class="footer-link-btn" id="btnOpenFeedback">💬 问题反馈与勘误</button>
+        <span class="footer-sep">·</span>
         <button class="footer-link-btn" id="btnOpenDisclaimer">免责与版权声明</button>
         <span class="footer-sep">·</span>
         <button class="footer-link-btn" id="btnOpenAbout">关于项目</button>
@@ -116,6 +121,55 @@
     </div>
   </div>
 
+  <!-- Modal: Feedback & Errata -->
+  <div id="feedbackModal" class="app-modal" role="dialog" aria-modal="true" style="display:none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>💬 问题反馈与勘误建议</h3>
+        <button class="modal-close" aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;">
+        <p style="font-size:13px;color:var(--ink-secondary);line-height:1.55;">
+          感谢您协助完善本开源实训平台！如果您在做题过程中发现试题录入错别字、参考翻译存疑、长难句切分问题或有任何功能建议，欢迎在此提交。
+        </p>
+
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--ink-primary);display:block;margin-bottom:4px;">反馈类型</label>
+          <select id="fbType" class="year-select" style="width:100%;">
+            <option value="题目/译文/选项勘误">📝 题目 / 译文 / 选项勘误</option>
+            <option value="打分算法与语块建议">🎯 打分算法 / 语块切分建议</option>
+            <option value="新功能建议">💡 新功能建议</option>
+            <option value="网页显示或 Bug 报告">🐞 网页显示或 Bug 报告</option>
+            <option value="其他反馈">💬 其他反馈</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--ink-primary);display:block;margin-bottom:4px;">关联真题位置（已自动定位）</label>
+          <input id="fbContext" class="year-select" readonly style="width:100%;background:var(--bg-subtle);color:var(--brand-navy);font-weight:600;font-size:13px;" />
+        </div>
+
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--ink-primary);display:block;margin-bottom:4px;">问题详细说明 <span style="color:var(--accent-red);">*</span></label>
+          <textarea id="fbContent" class="trans-textarea" rows="4" placeholder="请在此描述具体问题（例如：哪句翻译有疑问、选项定位句错漏、或者希望优化的交互方式）..."></textarea>
+        </div>
+
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--ink-primary);display:block;margin-bottom:4px;">联系方式（选填）</label>
+          <input id="fbContact" class="year-select" placeholder="您的邮箱 / 微信 / GitHub ID（方便向您同步处理进展）" style="width:100%;" />
+        </div>
+      </div>
+      <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-sm btn-outline" id="btnFbCopy">📋 复制反馈文本</button>
+          <button class="btn btn-sm btn-outline" id="btnFbEmail">✉️ 邮件反馈</button>
+        </div>
+        <button class="btn btn-sm btn-primary" id="btnFbGithub">🚀 提交到 GitHub Issue</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: About Project -->
   <div id="aboutModal" class="app-modal" role="dialog" aria-modal="true" style="display:none;">
     <div class="modal-backdrop"></div>
@@ -149,7 +203,7 @@
       document.head.appendChild(s);
     }
   </script>
-  <script src="app.js?v=1793853535"></script>
+  <script src="app.js?v=1793854983"></script>
   <script src="scroll-header.js"></script>
 </body>
 </html>

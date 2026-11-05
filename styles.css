@@ -213,7 +213,7 @@ button, input, select, textarea {
 /* Left Sidebar */
 .side-panel {
   position: sticky;
-  top: 76px;
+  top: calc(var(--header-height, 118px) + 16px);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -1553,21 +1553,21 @@ button, input, select, textarea {
 /* Floating Full-Passage Progress Widget */
 .floating-progress-widget {
   position: fixed;
-  top: 74px;
-  right: 18px;
+  top: calc(var(--header-height, 118px) + 14px);
+  right: 20px;
   z-index: 35;
   display: flex;
   align-items: center;
   gap: 9px;
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(203, 213, 225, 0.85);
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.1);
-  padding: 6px 12px 6px 7px;
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.12);
+  padding: 7px 14px 7px 8px;
   border-radius: 999px;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, top 0.2s ease;
   user-select: none;
 }
 
@@ -1795,4 +1795,25 @@ button, input, select, textarea {
   cursor: not-allowed !important;
   pointer-events: none;
   filter: grayscale(40%);
+}
+
+.btn-feedback-mini {
+  background: none;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  color: var(--ink-muted);
+  font-size: 11px;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.4;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.btn-feedback-mini:hover {
+  background: var(--brand-blue-soft);
+  color: var(--brand-navy);
+  border-color: var(--brand-navy);
 }

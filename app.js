@@ -1206,7 +1206,10 @@
             <span class="sent-code">${s.code}</span>
             ${patternPills}
           </div>
-          ${scoreBadgeHtml}
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button class="btn-feedback-mini" data-feedback-sent="${s.id}" data-sent-code="${s.code}" title="本句翻译/采分点勘误反馈">💬 勘误</button>
+            ${scoreBadgeHtml}
+          </div>
         </div>
 
         <div class="sent-en-text">${escHtml(s.en)}</div>
@@ -1458,9 +1461,12 @@
                 <span class="para-badge">Q${q.n} · ${escHtml(q.kind)}</span>
                 <span style="font-size:12.5px;color:var(--ink-muted);margin-left:8px;">定位句：${escHtml(q.loc)}</span>
               </div>
-              <button class="btn btn-sm btn-outline" data-toggle-q="${qKey}" data-ans="${q.answer}">
-                ${picked ? "隐藏解析重做" : "直接显示答案解析"}
-              </button>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <button class="btn-feedback-mini" data-feedback-q="第 ${q.n} 题 (${escHtml(q.kind)})" title="本题题干/选项/解析勘误">💬 勘误</button>
+                <button class="btn btn-sm btn-outline" data-toggle-q="${qKey}" data-ans="${q.answer}">
+                  ${picked ? "隐藏解析重做" : "直接显示答案解析"}
+                </button>
+              </div>
             </div>
             <div style="font-family:var(--font-serif-en);font-size:16px;font-weight:600;color:var(--ink-primary);">
               ${escHtml(q.stem)}
@@ -1718,6 +1724,54 @@
     }
   }
 
+
+  // =========================================================================
+  // Header Height Sync & Feedback System
+  // =========================================================================
+  function syncHeaderHeight() {
+    const header = document.querySelector(".top-header");
+    if (header) {
+      const h = header.offsetHeight;
+      if (h > 0) {
+        document.documentElement.style.setProperty("--header-height", `${h}px`);
+      }
+    }
+  }
+
+  function openFeedbackModal(defaultContext = "", defaultContent = "") {
+    const modal = document.getElementById("feedbackModal");
+    if (!modal) return;
+    const contextEl = document.getElementById("fbContext");
+    const contentEl = document.getElementById("fbContent");
+    const typeEl = document.getElementById("fbType");
+
+    const currentContext = defaultContext || `${state.exam} ${state.year} 年 · Text ${state.textId}`;
+    if (contextEl) contextEl.value = currentContext;
+    if (contentEl) contentEl.value = defaultContent || "";
+    if (typeEl && defaultContext) typeEl.value = "题目/译文/选项勘误";
+    modal.style.display = "flex";
+    if (contentEl) {
+      setTimeout(() => contentEl.focus(), 80);
+    }
+  }
+
+  function formatFeedbackPayload() {
+    const type = document.getElementById("fbType")?.value || "问题反馈";
+    const context = document.getElementById("fbContext")?.value || "";
+    const content = document.getElementById("fbContent")?.value.trim() || "";
+    const contact = document.getElementById("fbContact")?.value.trim() || "未提供";
+
+    if (!content) {
+      alert("请填写具体的问题或建议说明。");
+      return null;
+    }
+
+    const title = `[${type}] ${context}`;
+    const body = `### 反馈类型\n${type}\n\n### 关联真题位置\n${context}\n\n### 详细说明\n${content}\n\n### 联系方式\n${contact}\n\n---\n*来自考研英语精翻实训台客户端反馈*\n*URL: ${window.location.href}*\n*UA: ${navigator.userAgent}*`;
+
+    return { type, context, content, contact, title, body };
+  }
+
   function initModals() {
     const modalDisclaimer = document.getElementById("disclaimerModal");
     const modalAbout = document.getElementById("aboutModal");
@@ -1735,6 +1789,81 @@
         if (modalAbout) modalAbout.style.display = "flex";
       });
     }
+
+    const modalFeedback = document.getElementById("feedbackModal");
+
+    const btnHeaderFeedback = document.getElementById("btnHeaderFeedback");
+    if (btnHeaderFeedback) {
+      btnHeaderFeedback.addEventListener("click", () => openFeedbackModal());
+    }
+
+    const btnOpenFeedback = document.getElementById("btnOpenFeedback");
+    if (btnOpenFeedback) {
+      btnOpenFeedback.addEventListener("click", () => openFeedbackModal());
+    }
+
+    const btnFbGithub = document.getElementById("btnFbGithub");
+    if (btnFbGithub) {
+      btnFbGithub.addEventListener("click", () => {
+        const payload = formatFeedbackPayload();
+        if (!payload) return;
+        const ghUrl = `https://github.com/Eastorie/kaoyan-reading-jingfan/issues/new?title=${encodeURIComponent(payload.title)}&body=${encodeURIComponent(payload.body)}`;
+        window.open(ghUrl, "_blank", "noopener,noreferrer");
+        if (modalFeedback) modalFeedback.style.display = "none";
+        showToast("已为你打开 GitHub Issue 页面，点击提交即可！");
+      });
+    }
+
+    const btnFbCopy = document.getElementById("btnFbCopy");
+    if (btnFbCopy) {
+      btnFbCopy.addEventListener("click", () => {
+        const payload = formatFeedbackPayload();
+        if (!payload) return;
+        const textToCopy = `【考研英语精翻实训台问题反馈】\n\n${payload.body}`;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(textToCopy).then(() => {
+            showToast("已成功复制反馈文本到剪贴板！");
+          }).catch(() => {
+            showToast("复制成功！");
+          });
+        } else {
+          showToast("已成功复制反馈文本！");
+        }
+      });
+    }
+
+    const btnFbEmail = document.getElementById("btnFbEmail");
+    if (btnFbEmail) {
+      btnFbEmail.addEventListener("click", () => {
+        const payload = formatFeedbackPayload();
+        if (!payload) return;
+        const mailUrl = `mailto:eastorie@users.noreply.github.com?subject=${encodeURIComponent(payload.title)}&body=${encodeURIComponent(payload.body)}`;
+        window.location.href = mailUrl;
+      });
+    }
+
+    // Delegated click for sentence and question feedback buttons
+    document.addEventListener("click", (e) => {
+      const sentBtn = e.target.closest("[data-feedback-sent]");
+      if (sentBtn) {
+        const sentId = sentBtn.dataset.feedbackSent;
+        const sentCode = sentBtn.dataset.sentCode || "";
+        const context = `${state.exam} ${state.year} 年 · Text ${state.textId} · ${sentCode} (${sentId})`;
+        const card = document.getElementById(`card-${sentId}`);
+        const enText = card?.querySelector(".sent-en-text")?.textContent?.trim() || "";
+        const defaultContent = enText ? `【原句】：${enText}\n\n【反馈说明 / 疑问点】：` : "";
+        openFeedbackModal(context, defaultContent);
+        return;
+      }
+
+      const qBtn = e.target.closest("[data-feedback-q]");
+      if (qBtn) {
+        const qLabel = qBtn.dataset.feedbackQ;
+        const context = `${state.exam} ${state.year} 年 · Text ${state.textId} · ${qLabel}`;
+        openFeedbackModal(context, `【针对题目】：${qLabel}\n\n【反馈说明 / 疑问点】：`);
+        return;
+      }
+    });
 
     const btnAgree = document.getElementById("btnDisclaimerAgree");
     if (btnAgree) {
@@ -2027,6 +2156,7 @@
   }
 
   function renderAll() {
+    syncHeaderHeight();
     renderHeaderControls();
     renderSidebar();
     const workspace = document.getElementById("workspaceArea");
