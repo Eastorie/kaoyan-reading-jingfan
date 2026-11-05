@@ -739,7 +739,10 @@
     }
 
     const passage = getCurrentPassage();
-    if (!passage) return;
+    if (!passage) {
+      if (sidePanel) sidePanel.style.display = "none";
+      return;
+    }
     const sents = getPassageSentences(passage);
     const doneSents = sents.filter((s) => state.records[s.id] && state.records[s.id].submitted);
     const pct = sents.length ? Math.round((doneSents.length / sents.length) * 100) : 0;

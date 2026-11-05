@@ -202,9 +202,7 @@
 
   <script>
     if (!location.protocol.startsWith("http")) {
-      var s = document.createElement("script");
-      s.src = "data.js";
-      document.head.appendChild(s);
+      document.write('<script src="data.js"><\/script>');
     }
   </script>
   <script src="app.js?v=1793860000"></script>
