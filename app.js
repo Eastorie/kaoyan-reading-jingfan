@@ -1255,20 +1255,7 @@
       })
       .join("");
 
-    const doneCount = sents.filter((s) => state.records[s.id] && state.records[s.id].submitted).length;
-    const pctVal = sents.length ? Math.round((doneCount / sents.length) * 100) : 0;
     container.innerHTML = `
-      <!-- Floating Translation Progress Indicator -->
-      <div class="floating-progress-widget" id="floatProgWidget" onclick="document.getElementById('progressCard')?.scrollIntoView({behavior:'smooth'})">
-        <div class="float-prog-circle" style="background: conic-gradient(var(--brand-navy) ${pctVal * 3.6}deg, #E2E8F0 ${pctVal * 3.6}deg);">
-          <span class="float-prog-num">${pctVal}%</span>
-        </div>
-        <div class="float-prog-text">
-          <span class="float-prog-label">全文翻译进度</span>
-          <span class="float-prog-val">已译 ${doneCount} / ${sents.length} 句</span>
-        </div>
-      </div>
-
       <div class="workspace-toolbar">
         <div>
           <strong style="color:var(--brand-navy);">真题阅读选项精析（Q${passage.questions[0]?.n || 21}–Q${passage.questions[passage.questions.length - 1]?.n || 25}）：</strong>
