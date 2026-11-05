@@ -1837,7 +1837,7 @@
       btnFbEmail.addEventListener("click", () => {
         const payload = formatFeedbackPayload();
         if (!payload) return;
-        const mailUrl = `mailto:eastorie@users.noreply.github.com?subject=${encodeURIComponent(payload.title)}&body=${encodeURIComponent(payload.body)}`;
+        const mailUrl = `mailto:3146985697@qq.com?subject=${encodeURIComponent(payload.title)}&body=${encodeURIComponent(payload.body)}`;
         window.location.href = mailUrl;
       });
     }
