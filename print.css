@@ -1,0 +1,89 @@
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 10mm 14mm 10mm;
+  }
+  
+  html, body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 11pt !important;
+    line-height: 1.45 !important;
+  }
+
+  .top-header,
+  .side-panel,
+  .workspace-toolbar,
+  .mobile-bottom-nav,
+  .notebook-controls,
+  .no-print,
+  #toastMsg {
+    display: none !important;
+  }
+
+  .main-container {
+    display: block !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .content-area {
+    width: 100% !important;
+  }
+
+  .notebook-header-card {
+    background: none !important;
+    color: #174D83 !important;
+    padding: 0 0 10px 0 !important;
+    border-bottom: 2px solid #174D83 !important;
+    margin-bottom: 15px !important;
+  }
+
+  .notebook-header-card h2 {
+    font-size: 18pt !important;
+    color: #174D83 !important;
+  }
+
+  .notebook-header-card p {
+    font-size: 10pt !important;
+    color: #555 !important;
+  }
+
+  .notebook-grid {
+    display: block !important;
+  }
+
+  .nb-card {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    border: 1px solid #CBD5E1 !important;
+    box-shadow: none !important;
+    margin-bottom: 12px !important;
+    padding: 10px 12px !important;
+    background: #fff !important;
+  }
+
+  .nb-card.pattern-card {
+    border-left: 4px solid #B45309 !important;
+  }
+
+  .nb-card.vocab-card {
+    border-left: 4px solid #174D83 !important;
+  }
+
+  .nb-term {
+    font-size: 13pt !important;
+  }
+
+  .nb-meaning {
+    font-size: 11pt !important;
+  }
+
+  .nb-context {
+    background: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+    font-size: 9.5pt !important;
+    padding: 6px 8px !important;
+  }
+}

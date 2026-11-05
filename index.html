@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>考研英语（二）2015–2026 阅读逐句精翻实训与智能单词本</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="print.css" media="print" />
+</head>
+<body>
+  <!-- Sticky Header -->
+  <header class="top-header">
+    <div class="header-inner">
+      <div class="brand-group">
+        <div class="brand-mark">精翻</div>
+        <div class="brand-titles">
+          <h1>考研英语（二）阅读逐句精翻实训台</h1>
+          <p>2015–2026 全真题库 · 逐句输入批改 · 整篇诊断评分 · 错题单词句型本 PDF 导出</p>
+        </div>
+      </div>
+
+      <div class="selector-group">
+        <label for="yearSelect" style="font-size:12.5px;color:var(--ink-secondary);font-weight:600;">年份</label>
+        <select id="yearSelect" class="year-select" aria-label="选择真题年份"></select>
+        <div id="textPills" class="text-pills" role="tablist" aria-label="选择阅读篇章"></div>
+      </div>
+
+      <nav class="nav-tabs desktop-only" aria-label="功能模块切换">
+        <button class="nav-tab active" data-tab="practice">01 逐句精翻实训</button>
+        <button class="nav-tab" data-tab="overview">02 篇章逻辑导图</button>
+        <button class="nav-tab" data-tab="questions">03 真题选项精析</button>
+        <button class="nav-tab" data-tab="notebook">
+          <span>04 单词与句型本</span>
+          <span id="nbCountBadge" class="badge-count">0</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Layout -->
+  <main class="main-container">
+    <!-- Left Sidebar -->
+    <aside class="side-panel">
+      <section class="card" id="passageMetaCard"></section>
+      <section class="card" id="progressCard"></section>
+    </aside>
+
+    <!-- Right Workspace -->
+    <section class="content-area" id="workspaceArea"></section>
+  </main>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav class="mobile-bottom-nav" aria-label="手机端底部导航">
+    <button class="mob-tab active" data-tab="practice">
+      <span>逐句精翻</span>
+    </button>
+    <button class="mob-tab" data-tab="overview">
+      <span>篇章导图</span>
+    </button>
+    <button class="mob-tab" data-tab="questions">
+      <span>题目精析</span>
+    </button>
+    <button class="mob-tab" data-tab="notebook">
+      <span>单词本 (<em id="mobNbCount" style="font-style:normal;">0</em>)</span>
+    </button>
+  </nav>
+
+  <div id="toastMsg" class="toast-Message" role="status" aria-live="polite"></div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
