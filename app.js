@@ -1,7 +1,11 @@
 (function () {
   "use strict";
 
-  const BANK = window.KAOYAN_JINGFAN_BANK || [];
+  let BANK = window.KAOYAN_JINGFAN_BANK || [];
+  let BANK_MANIFEST = [];
+  const BANK_CHUNKS = {};
+  let isChunkLoading = false;
+
   const STORAGE_KEY_RECORDS = "kaoyan_jingfan_records_v1";
   const STORAGE_KEY_NOTEBOOK = "kaoyan_jingfan_notebook_v1";
   const STORAGE_KEY_UI = "kaoyan_jingfan_ui_v1";
@@ -156,12 +160,96 @@
       .replace(/"/g, "&quot;");
   }
 
-  function getYearObj(year, exam = state.exam) {
-    let found = BANK.find((y) => Number(y.year) === Number(year) && (!exam || y.exam === exam));
-    if (!found) {
-      found = BANK.find((y) => !exam || y.exam === exam) || BANK[0];
+  function getExamSlug(exam) {
+    return exam && exam.includes("一") ? "e1" : "e2";
+  }
+
+  function getChunkKey(exam, year) {
+    return `${getExamSlug(exam)}_${year}`;
+  }
+
+  function getAvailableYears() {
+    if (BANK_MANIFEST && BANK_MANIFEST.length > 0) {
+      return BANK_MANIFEST.filter((y) => y.exam === state.exam);
     }
-    return found;
+    if (BANK && BANK.length > 0) {
+      return BANK.filter((y) => y.exam === state.exam);
+    }
+    return [];
+  }
+
+  function renderWorkspaceLoading() {
+    const workspace = document.getElementById("workspaceArea");
+    if (!workspace) return;
+    workspace.innerHTML = `
+      <div class="card" style="text-align:center;padding:56px 20px;">
+        <div class="chunk-spinner" style="width:40px;height:40px;border:3px solid var(--border-light);border-top-color:var(--brand-navy);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;"></div>
+        <h3 style="font-size:16px;color:var(--brand-navy);margin-bottom:6px;">正在极速载入 ${escHtml(state.exam)} ${state.year} 年全真精翻题库...</h3>
+        <p style="font-size:13px;color:var(--ink-secondary);">按需动态秒开 · 仅消耗约 30KB 流量</p>
+      </div>
+    `;
+  }
+
+  function renderWorkspaceError(msg) {
+    const workspace = document.getElementById("workspaceArea");
+    if (!workspace) return;
+    workspace.innerHTML = `
+      <div class="card" style="text-align:center;padding:56px 20px;">
+        <h3 style="font-size:16px;color:var(--accent-red);margin-bottom:6px;">题库数据加载失败</h3>
+        <p style="font-size:13.5px;color:var(--ink-secondary);max-width:480px;margin:0 auto 16px;">${escHtml(msg)}</p>
+        <button class="btn btn-primary" onclick="location.reload()">重新载入页面</button>
+      </div>
+    `;
+  }
+
+  async function loadYearChunk(year = state.year, exam = state.exam) {
+    const key = getChunkKey(exam, year);
+    if (BANK_CHUNKS[key]) return BANK_CHUNKS[key];
+
+    const inBank = BANK.find((y) => Number(y.year) === Number(year) && y.exam === exam);
+    if (inBank) {
+      BANK_CHUNKS[key] = inBank;
+      return inBank;
+    }
+
+    try {
+      isChunkLoading = true;
+      renderSidebar();
+      renderWorkspaceLoading();
+      const res = await fetch(`data/chunks/${key}.json`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      BANK_CHUNKS[key] = data;
+      isChunkLoading = false;
+      renderAll();
+      return data;
+    } catch (err) {
+      console.warn(`Failed to fetch chunk ${key}:`, err);
+      isChunkLoading = false;
+      if (BANK.length > 0) {
+        renderAll();
+      } else {
+        renderWorkspaceError(`加载 ${exam} ${year} 年真题失败，请检查网络连接或本地静态服务器。`);
+      }
+      return null;
+    }
+  }
+
+  function getYearObj(year = state.year, exam = state.exam) {
+    const key = getChunkKey(exam, year);
+    if (BANK_CHUNKS[key]) {
+      return BANK_CHUNKS[key];
+    }
+    let found = BANK.find((y) => Number(y.year) === Number(year) && (!exam || y.exam === exam));
+    if (found) {
+      BANK_CHUNKS[key] = found;
+      return found;
+    }
+    const chunkKeys = Object.keys(BANK_CHUNKS);
+    if (chunkKeys.length > 0) {
+      return BANK_CHUNKS[chunkKeys[0]];
+    }
+    return BANK[0] || null;
   }
 
   function getCurrentPassage() {
@@ -561,11 +649,10 @@
         examSel._bound = true;
         examSel.addEventListener("change", (e) => {
           state.exam = e.target.value;
-          // Refresh available years for this exam
           refreshYearOptions();
           state.showReport = false;
           saveUi();
-          renderAll();
+          loadYearChunk(state.year, state.exam).then(() => renderAll());
         });
       }
     }
@@ -573,7 +660,7 @@
     function refreshYearOptions() {
       const yearSel = document.getElementById("yearSelect");
       if (!yearSel) return;
-      const filteredYears = BANK.filter((y) => y.exam === state.exam);
+      const filteredYears = getAvailableYears();
       yearSel.innerHTML = "";
       filteredYears.forEach((y) => {
         const opt = document.createElement("option");
@@ -581,7 +668,6 @@
         opt.textContent = `${y.year} 年`;
         yearSel.appendChild(opt);
       });
-      // Check if state.year exists in this exam
       const exists = filteredYears.some((y) => Number(y.year) === Number(state.year));
       if (!exists && filteredYears.length > 0) {
         state.year = Number(filteredYears[0].year);
@@ -600,7 +686,7 @@
           state.year = Number(e.target.value);
           state.showReport = false;
           saveUi();
-          renderAll();
+          loadYearChunk(state.year, state.exam).then(() => renderAll());
         });
       }
       yearSel.value = state.year;
@@ -1478,6 +1564,122 @@
     }
   }
 
+
+  // =========================================================================
+  // Data Backup & Restore (JSON Export / Import)
+  // =========================================================================
+  function exportBackupData() {
+    const backup = {
+      app: "kaoyan_reading_jingfan",
+      version: "1.0",
+      exportTime: new Date().toISOString(),
+      records: state.records || {},
+      notebook: state.notebook || [],
+      qAnswers: state.qAnswers || {},
+      ui: {
+        exam: state.exam,
+        year: state.year,
+        textId: state.textId,
+        autoCollectWeak: state.autoCollectWeak,
+      },
+    };
+    const jsonStr = JSON.stringify(backup, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const dateStr = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `考研英语精翻学习记录备份_${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast("学习记录与单词本已成功导出备份！");
+  }
+
+  function importBackupData(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!data || typeof data !== "object") throw new Error("无效的备份文件结构");
+
+        let recCount = 0;
+        let nbCount = 0;
+
+        if (data.records && typeof data.records === "object") {
+          state.records = Object.assign({}, state.records, data.records);
+          recCount = Object.keys(data.records).length;
+          saveRecords();
+        }
+
+        if (Array.isArray(data.notebook)) {
+          const existingIds = new Set(state.notebook.map((x) => x.id));
+          data.notebook.forEach((item) => {
+            if (!existingIds.has(item.id)) {
+              state.notebook.push(item);
+              existingIds.add(item.id);
+              nbCount++;
+            }
+          });
+          saveNotebook();
+        }
+
+        if (data.qAnswers && typeof data.qAnswers === "object") {
+          state.qAnswers = Object.assign({}, state.qAnswers, data.qAnswers);
+          saveQAnswers();
+        }
+
+        if (data.ui && typeof data.ui === "object") {
+          if (data.ui.exam) state.exam = data.ui.exam;
+          if (data.ui.year) state.year = data.ui.year;
+          if (data.ui.textId) state.textId = data.ui.textId;
+          saveUi();
+        }
+
+        migrateHistoricalKeys();
+        renderAll();
+        showToast(`成功恢复：合并了 ${recCount} 条答题记录与 ${nbCount} 条生词句型！`);
+      } catch (err) {
+        alert("导入失败：请确认上传的是本平台导出的标准备份 JSON 文件。");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function initModals() {
+    const modalDisclaimer = document.getElementById("disclaimerModal");
+    const modalAbout = document.getElementById("aboutModal");
+
+    const btnOpenDisclaimer = document.getElementById("btnOpenDisclaimer");
+    if (btnOpenDisclaimer) {
+      btnOpenDisclaimer.addEventListener("click", () => {
+        if (modalDisclaimer) modalDisclaimer.style.display = "flex";
+      });
+    }
+
+    const btnOpenAbout = document.getElementById("btnOpenAbout");
+    if (btnOpenAbout) {
+      btnOpenAbout.addEventListener("click", () => {
+        if (modalAbout) modalAbout.style.display = "flex";
+      });
+    }
+
+    document.querySelectorAll(".app-modal").forEach((m) => {
+      m.addEventListener("click", (e) => {
+        if (
+          e.target === m ||
+          e.target.classList.contains("modal-backdrop") ||
+          e.target.classList.contains("modal-close") ||
+          e.target.classList.contains("btn-close-modal")
+        ) {
+          m.style.display = "none";
+        }
+      });
+    });
+  }
+
   function renderNotebookWorkspace(container) {
     const filtered = getFilteredNotebook();
     const vocabCnt = state.notebook.filter((x) => x.kind === "vocab").length;
@@ -1544,6 +1746,13 @@
           <button class="btn btn-amber" id="btnExportPdfMain" style="font-size:14.5px;padding:10px 18px;">
             导出单词与句型本 PDF (${filtered.length || state.notebook.length} 条)
           </button>
+          <button class="btn btn-outline" id="btnExportBackup" style="background:rgba(255,255,255,0.12);color:#fff;border-color:rgba(255,255,255,0.3);">
+            📥 备份学习记录 (JSON)
+          </button>
+          <button class="btn btn-outline" id="btnImportBackup" style="background:rgba(255,255,255,0.12);color:#fff;border-color:rgba(255,255,255,0.3);">
+            📤 恢复本地备份
+          </button>
+          <input type="file" id="inputRestoreBackupFile" accept=".json" style="display:none;" />
           <button class="btn btn-outline" id="btnShowAddCustom" style="background:rgba(255,255,255,0.12);color:#fff;border-color:rgba(255,255,255,0.3);">
             + 手动添加词条/句型
           </button>
@@ -1697,10 +1906,29 @@
     const btnClear = document.getElementById("btnClearNotebook");
     if (btnClear) {
       btnClear.addEventListener("click", () => {
-        state.notebook = [];
-        saveNotebook();
-        renderAll();
-        showToast("已清空单词本");
+        if (confirm("确定要清空当前的单词与句型本吗？建议提前备份。")) {
+          state.notebook = [];
+          saveNotebook();
+          renderAll();
+          showToast("已清空单词本");
+        }
+      });
+    }
+
+    const btnExportBk = document.getElementById("btnExportBackup");
+    if (btnExportBk) {
+      btnExportBk.addEventListener("click", exportBackupData);
+    }
+
+    const btnImportBk = document.getElementById("btnImportBackup");
+    const inputRestore = document.getElementById("inputRestoreBackupFile");
+    if (btnImportBk && inputRestore) {
+      btnImportBk.addEventListener("click", () => inputRestore.click());
+      inputRestore.addEventListener("change", (e) => {
+        if (e.target.files && e.target.files[0]) {
+          importBackupData(e.target.files[0]);
+          inputRestore.value = "";
+        }
       });
     }
   }
@@ -1721,8 +1949,9 @@
     }
   }
 
-  function init() {
+  async function init() {
     loadStorage();
+    initModals();
     document.querySelectorAll("[data-tab]").forEach((btn) => {
       btn.addEventListener("click", () => {
         state.activeTab = btn.dataset.tab;
@@ -1730,7 +1959,40 @@
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
     });
-    renderAll();
+
+    // Offline data.js already loaded
+    if (Array.isArray(window.KAOYAN_JINGFAN_BANK) && window.KAOYAN_JINGFAN_BANK.length > 0) {
+      BANK = window.KAOYAN_JINGFAN_BANK;
+      BANK_MANIFEST = BANK.map((item) => ({
+        exam: item.exam,
+        year: item.year,
+        title: item.title,
+        scope: item.scope,
+        texts: item.texts.map((t) => ({ id: t.id, title: t.title, genre: t.genre })),
+      }));
+      BANK.forEach((item) => {
+        BANK_CHUNKS[getChunkKey(item.exam, item.year)] = item;
+      });
+      renderAll();
+      return;
+    }
+
+    // Dynamic on-demand loading via manifest.json
+    try {
+      const res = await fetch("data/manifest.json");
+      if (!res.ok) throw new Error("Manifest HTTP " + res.status);
+      BANK_MANIFEST = await res.json();
+      renderHeaderControls();
+      await loadYearChunk(state.year, state.exam);
+    } catch (e) {
+      console.warn("Manifest loading failed, attempting offline bank fallback:", e);
+      if (Array.isArray(window.KAOYAN_JINGFAN_BANK) && window.KAOYAN_JINGFAN_BANK.length > 0) {
+        BANK = window.KAOYAN_JINGFAN_BANK;
+        renderAll();
+      } else {
+        renderWorkspaceError("未能加载题库索引，请在 HTTP 服务器（如 python3 server.py）或支持静态托管的环境下运行。");
+      }
+    }
   }
 
   if (document.readyState === "loading") {

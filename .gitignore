@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS / Editor artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Private / local data & scan materials (Strictly prohibited from public repo)
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.webp
+output/
+tmp/
+private/
+sources/
+*.zip
+*.tar.gz
+*.rar
+
+# Local logs & environment
+*.log
+.env
+.env.local

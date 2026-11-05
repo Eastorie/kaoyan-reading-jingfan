@@ -70,10 +70,85 @@
     </button>
   </nav>
 
+  <!-- App Footer -->
+  <footer class="app-footer no-print">
+    <div class="footer-inner">
+      <div class="footer-info">
+        <span>考研英语阅读逐句精翻实训台 · 纯前端自学研读辅助工具</span>
+        <span class="footer-sep">|</span>
+        <span>本地存储 · 零个人信息采集</span>
+      </div>
+      <div class="footer-links">
+        <button class="footer-link-btn" id="btnOpenDisclaimer">免责与版权声明</button>
+        <span class="footer-sep">·</span>
+        <button class="footer-link-btn" id="btnOpenAbout">关于项目</button>
+        <span class="footer-sep">·</span>
+        <a href="https://github.com/Eastorie/kaoyan-reading-jingfan" target="_blank" rel="noopener noreferrer" class="footer-link-btn">GitHub 仓库</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal: Disclaimer & Copyright -->
+  <div id="disclaimerModal" class="app-modal" role="dialog" aria-modal="true" style="display:none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>版权与合规免责声明</h3>
+        <button class="modal-close" aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body" style="font-size:13.5px;line-height:1.75;color:var(--ink-secondary);">
+        <p><strong>1. 项目性质与宗旨</strong><br />
+        本站为<strong>非营利、开放源码</strong>的考研英语自学研读与实训工具，旨在为备考全国硕士研究生招生考试的考生提供长难句语块切分、逐句翻译训练及高频考点自测服务，全站无任何商业付费、打赏或广告推广功能。</p>
+        
+        <p style="margin-top:10px;"><strong>2. 试题与文本版权归属</strong><br />
+        本工具收录的英文阅读真题选自历年公开发布的全国硕士研究生招生考试（英语一/英语二）统考试题及海外学术报刊（如 The Economist, Scientific American, The Guardian 等）。英文试题及选文著作权依法归原命题机构及原刊所有。</p>
+        
+        <p style="margin-top:10px;"><strong>3. 衍生研读与参考解析</strong><br />
+        平台呈现的中文语块拆分、核心词汇句中释义、长难句结构点拨与参考译文，均为教研协作团队基于历年公开题源自主研发、独立撰写的学术研读笔记，供广大考生个人学术研习与翻译技能训练对照交流使用，严禁任何机构或个人用于二次转售、商业出版或盗版分发。</p>
+
+        <p style="margin-top:10px;"><strong>4. 数据安全与零隐私追踪</strong><br />
+        本工具严格遵守《中华人民共和国个人信息保护法》(PIPL) 与最小必要原则，<strong>全站不设账号注册体系，不架设中心化用户数据库，不收集任何用户身份信息或设备追踪标识</strong>。用户的作答记录、自测分数、生词本均安全保存在用户设备本地浏览器（localStorage）。</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary btn-close-modal">我已知晓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: About Project -->
+  <div id="aboutModal" class="app-modal" role="dialog" aria-modal="true" style="display:none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>关于考研英语逐句精翻实训台</h3>
+        <button class="modal-close" aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body" style="font-size:13.5px;line-height:1.75;color:var(--ink-secondary);">
+        <p><strong>技术亮点与架构特性：</strong></p>
+        <ul style="padding-left:18px;margin-top:6px;">
+          <li><strong>按需分片秒开</strong>：题库按科目与年份拆分动态加载，首屏传输体积降至 ~80KB，比传统大单包减少 98% 流量消耗，在弱网环境下也能秒级进入实训。</li>
+          <li><strong>纯客户端智能算法</strong>：基于 Dice 语块相似度与核心词汇/句型规则引擎，打分与诊断 100% 在本地运行，零服务器延时。</li>
+          <li><strong>跨终端自适应排版</strong>：完美兼容电脑宽屏沉浸训练与手机移动端单手刷题，手机端支持下滑自动隐藏顶栏沉浸阅读。</li>
+          <li><strong>双重备份保障</strong>：除了本地自动缓存外，提供学习记录 JSON 导出与恢复功能，随时迁移换机，做题记录永不丢失。</li>
+          <li><strong>标准 A4 打印支持</strong>：内置高质量打印样式表，支持一键将个人错题生词本导出为清晰排版的 PDF 进行考前纸质复盘。</li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary btn-close-modal">关闭</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toastMsg" class="toast-Message" role="status" aria-live="polite"></div>
 
-  <script src="data.js?v=1793851373"></script>
-  <script src="app.js?v=1793851373"></script>
+  <script>
+    if (!location.protocol.startsWith("http")) {
+      var s = document.createElement("script");
+      s.src = "data.js";
+      document.head.appendChild(s);
+    }
+  </script>
+  <script src="app.js?v=1793852000"></script>
   <script src="scroll-header.js"></script>
 </body>
 </html>

@@ -175,8 +175,45 @@ def detect_patterns(sent_en: str, note: str, chunks: list):
         })
     return found
 
+def split_chunks(bank_path="jingfan_bank.json", chunks_dir="data/chunks", manifest_path="data/manifest.json"):
+    if not os.path.exists(bank_path):
+        print(f"Bank file {bank_path} not found.")
+        return
+    with open(bank_path, "r", encoding="utf-8") as f:
+        bank = json.load(f)
+    os.makedirs(chunks_dir, exist_ok=True)
+    manifest = []
+    for item in bank:
+        exam = item.get("exam", "英语（二）")
+        year = item.get("year")
+        exam_slug = "e1" if "一" in exam else "e2"
+        chunk_filename = f"{exam_slug}_{year}.json"
+        chunk_rel_path = f"data/chunks/{chunk_filename}"
+        chunk_full_path = os.path.join(chunks_dir, chunk_filename)
+        with open(chunk_full_path, "w", encoding="utf-8") as cf:
+            json.dump(item, cf, ensure_ascii=False, separators=(",", ":"))
+        manifest.append({
+            "exam": exam,
+            "year": year,
+            "title": item.get("title", "考研英语阅读精翻"),
+            "scope": item.get("scope", "Part A · Text 1–4"),
+            "chunk": chunk_rel_path,
+            "texts": [{"id": t.get("id"), "title": t.get("title"), "genre": t.get("genre", "")} for t in item.get("texts", [])]
+        })
+    os.makedirs(os.path.dirname(manifest_path) or ".", exist_ok=True)
+    with open(manifest_path, "w", encoding="utf-8") as mf:
+        json.dump(manifest, mf, ensure_ascii=False, indent=2)
+    print(f"Successfully generated {len(manifest)} chunks and manifest.")
+
 def main():
-    jf_files = sorted(glob.glob("output/阅读精翻源稿/*-精翻.json"))
+    import sys
+    base = os.path.dirname(os.path.abspath(__file__))
+    source_dir = os.environ.get("SOURCE_DIR", "sources")
+    jf_files = sorted(glob.glob(os.path.join(source_dir, "*-精翻.json")))
+    if "--split" in sys.argv or not jf_files:
+        split_chunks(os.path.join(base, "jingfan_bank.json"), os.path.join(base, "data/chunks"), os.path.join(base, "data/manifest.json"))
+        return
+
     all_years = []
     total_sents = 0
     total_vocab = 0
@@ -185,37 +222,34 @@ def main():
             jf_data = json.load(f)
         year = jf_data["year"]
         exam = jf_data.get("exam", "英语（二）")
-        zy_path = f"tmp/pdfs/raw_data/zy/{year}.json" if exam == "英语（二）" else ""
-        zy_vocab_map = {}
-        if os.path.exists(zy_path):
-            with open(zy_path, "r", encoding="utf-8") as zf:
-                zy_data = json.load(zf)
-            for t_idx, t in enumerate(zy_data.get("texts", []), 1):
-                for p_idx, p in enumerate(t.get("paragraphs", []), 1):
-                    zy_vocab_map[(t_idx, p_idx)] = p.get("vocabulary", [])
         for t in jf_data["texts"]:
             tid = t["id"]
             for p_idx, p in enumerate(t["paragraphs"], 1):
-                para_vocab = zy_vocab_map.get((tid, p_idx), [])
                 for s_idx, s in enumerate(p["sentences"], 1):
                     exam_tag = "E1" if "一" in exam else "E2"
                     s["id"] = f"{year}-{exam_tag}-T{tid}-P{p_idx}-S{s_idx}"
                     s["code"] = f"P{p_idx}-S{s_idx}"
-                    s["vocab"] = match_vocab_in_sentence(s["en"], para_vocab, s["chunks"])
+                    s["vocab"] = match_vocab_in_sentence(s["en"], [], s["chunks"])
                     s["patterns"] = detect_patterns(s["en"], s.get("note", ""), s["chunks"])
                     s["chunk_kws"] = [extract_zh_keywords(c[1], add_synonyms=True) for c in s["chunks"]]
                     total_sents += 1
                     total_vocab += len(s["vocab"])
+        jf_data["sources"] = [{
+            "label": "全国硕士研究生招生考试历年公开试题及选文研读",
+            "url": "https://www.chsi.com.cn/"
+        }]
+        jf_data["source_note"] = f"本年度收录全国硕士研究生招生考试{exam} Section II Reading Comprehension Part A（Text 1–4，第 21–40 题）公开试题文本。逐句语块切分、核心词汇标注与解析由研读团队独立梳理与交叉校准，仅供学术探讨与英语综合应用能力训练自测，严禁用于任何商业牟利。"
         all_years.append(jf_data)
 
-    out_json = "web/kaoyan-jingfan-web/jingfan_bank.json"
+    out_json = os.path.join(base, "jingfan_bank.json")
     with open(out_json, "w", encoding="utf-8") as f:
         json.dump(all_years, f, ensure_ascii=False, separators=(",", ":"))
-    with open("web/kaoyan-jingfan-web/data.js", "w", encoding="utf-8") as f:
+    with open(os.path.join(base, "data.js"), "w", encoding="utf-8") as f:
         f.write("window.KAOYAN_JINGFAN_BANK = ")
         json.dump(all_years, f, ensure_ascii=False, separators=(",", ":"))
         f.write(";\n")
     print(f"Built data.js & jingfan_bank.json: {len(all_years)} years, {total_sents} sentences, {total_vocab} sentence-vocab items.")
+    split_chunks(out_json, os.path.join(base, "data/chunks"), os.path.join(base, "data/manifest.json"))
 
 if __name__ == "__main__":
     main()

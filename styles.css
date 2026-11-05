@@ -1654,3 +1654,138 @@ button, input, select, textarea {
     min-height: 52px;
   }
 }
+
+/* Loading spinner for chunk loading */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Modals for Compliance & About */
+.app-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(3px);
+}
+
+.modal-dialog {
+  position: relative;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 600px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  font-size: 16px;
+  color: var(--ink-primary);
+  font-weight: 700;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--ink-muted);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  justify-content: flex-end;
+  background: var(--bg-page);
+}
+
+/* Compliance App Footer */
+.app-footer {
+  margin-top: 40px;
+  padding: 24px 16px 40px;
+  border-top: 1px solid var(--border-light);
+  background: #ffffff;
+  color: var(--ink-muted);
+  font-size: 12.5px;
+}
+
+.footer-inner {
+  max-width: 1360px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.footer-sep {
+  margin: 0 8px;
+  opacity: 0.5;
+}
+
+.footer-links {
+  display: flex;
+  align-items: center;
+}
+
+.footer-link-btn {
+  background: none;
+  border: none;
+  color: var(--brand-navy);
+  font-size: 12.5px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 0;
+}
+
+.footer-link-btn:hover {
+  color: var(--brand-navy-dark);
+}
+
+@media (max-width: 768px) {
+  .app-footer {
+    padding-bottom: 84px;
+  }
+  .footer-inner {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+}
