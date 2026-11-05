@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>考研英语（二）2015–2026 阅读逐句精翻实训与智能单词本</title>
-  <link rel="stylesheet" href="styles.css?v=1793843298" />
+  <title>考研英语阅读逐句精翻实训与智能单词本（英一/英二 2010–2026）</title>
+  <link rel="stylesheet" href="styles.css?v=1793850677" />
   <link rel="stylesheet" href="print.css" media="print" />
 </head>
 <body>
@@ -14,12 +14,17 @@
       <div class="brand-group">
         <div class="brand-mark">精翻</div>
         <div class="brand-titles">
-          <h1>考研英语（二）阅读逐句精翻实训台</h1>
-          <p>2015–2026 全真题库 · 逐句输入批改 · 整篇诊断评分 · 错题单词句型本 PDF 导出</p>
+          <h1>考研英语阅读逐句精翻实训台</h1>
+          <p>英语一 / 英语二（2010–2026）全真题库 · 逐句输入智能批改 · 错词句型本 PDF 导出</p>
         </div>
       </div>
 
       <div class="selector-group">
+        <label for="examSelect" style="font-size:12.5px;color:var(--ink-secondary);font-weight:600;">科目</label>
+        <select id="examSelect" class="year-select" aria-label="选择考试科目" style="min-width:98px;">
+          <option value="英语（二）">英语（二）</option>
+          <option value="英语（一）">英语（一）</option>
+        </select>
         <label for="yearSelect" style="font-size:12.5px;color:var(--ink-secondary);font-weight:600;">年份</label>
         <select id="yearSelect" class="year-select" aria-label="选择真题年份"></select>
         <div id="textPills" class="text-pills" role="tablist" aria-label="选择阅读篇章"></div>
@@ -67,8 +72,8 @@
 
   <div id="toastMsg" class="toast-Message" role="status" aria-live="polite"></div>
 
-  <script src="data.js?v=1793843298"></script>
-  <script src="app.js?v=1793843298"></script>
+  <script src="data.js?v=1793850677"></script>
+  <script src="app.js?v=1793850677"></script>
   <script src="scroll-header.js"></script>
 </body>
 </html>

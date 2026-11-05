@@ -116,24 +116,8 @@ def match_vocab_in_sentence(sent_en: str, para_vocab: list, chunks: list):
             if len(matched) >= 5:
                 break
 
-    if len(matched) < 4:
-        for en_c, zh_c in chunks:
-            words = re.findall(r"[A-Za-z][A-Za-z\-]{3,}", en_c)
-            cand_words = [w for w in words if w.lower() not in STOPWORDS]
-            if cand_words:
-                phrase = " ".join(cand_words[:2])
-                p_low = phrase.lower()
-                if not any(p_low in existing or existing in p_low for existing in seen):
-                    seen.add(p_low)
-                    clean_zh = zh_c.strip(" ，。；：？！“”‘’")
-                    matched.append({
-                        "word": en_c.strip(" ,.;:?!\"'—()"),
-                        "meaning": clean_zh,
-                        "context_zh": clean_zh,
-                        "kws": extract_zh_keywords(clean_zh, add_synonyms=True)[:10]
-                    })
-            if len(matched) >= 5:
-                break
+    # Limit fallback extraction
+    pass
     return matched[:5]
 
 def detect_patterns(sent_en: str, note: str, chunks: list):
@@ -192,7 +176,7 @@ def detect_patterns(sent_en: str, note: str, chunks: list):
     return found
 
 def main():
-    jf_files = sorted(glob.glob("output/阅读精翻源稿/*-英语二-精翻.json"))
+    jf_files = sorted(glob.glob("output/阅读精翻源稿/*-精翻.json"))
     all_years = []
     total_sents = 0
     total_vocab = 0
@@ -200,7 +184,8 @@ def main():
         with open(jf_path, "r", encoding="utf-8") as f:
             jf_data = json.load(f)
         year = jf_data["year"]
-        zy_path = f"tmp/pdfs/raw_data/zy/{year}.json"
+        exam = jf_data.get("exam", "英语（二）")
+        zy_path = f"tmp/pdfs/raw_data/zy/{year}.json" if exam == "英语（二）" else ""
         zy_vocab_map = {}
         if os.path.exists(zy_path):
             with open(zy_path, "r", encoding="utf-8") as zf:
@@ -213,7 +198,8 @@ def main():
             for p_idx, p in enumerate(t["paragraphs"], 1):
                 para_vocab = zy_vocab_map.get((tid, p_idx), [])
                 for s_idx, s in enumerate(p["sentences"], 1):
-                    s["id"] = f"{year}-T{tid}-P{p_idx}-S{s_idx}"
+                    exam_tag = "E1" if "一" in exam else "E2"
+                    s["id"] = f"{year}-{exam_tag}-T{tid}-P{p_idx}-S{s_idx}"
                     s["code"] = f"P{p_idx}-S{s_idx}"
                     s["vocab"] = match_vocab_in_sentence(s["en"], para_vocab, s["chunks"])
                     s["patterns"] = detect_patterns(s["en"], s.get("note", ""), s["chunks"])

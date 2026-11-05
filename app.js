@@ -5,8 +5,10 @@
   const STORAGE_KEY_RECORDS = "kaoyan_jingfan_records_v1";
   const STORAGE_KEY_NOTEBOOK = "kaoyan_jingfan_notebook_v1";
   const STORAGE_KEY_UI = "kaoyan_jingfan_ui_v1";
+  const STORAGE_KEY_QANSWERS = "kaoyan_jingfan_qanswers_v1";
 
   let state = {
+    exam: "英语（二）", // '英语（二）' | '英语（一）'
     year: 2015,
     textId: 1,
     activeTab: "practice", // 'practice' | 'overview' | 'questions' | 'notebook'
@@ -25,9 +27,12 @@
       if (savedRecords) state.records = JSON.parse(savedRecords);
       const savedNb = localStorage.getItem(STORAGE_KEY_NOTEBOOK);
       if (savedNb) state.notebook = JSON.parse(savedNb);
+      const savedQa = localStorage.getItem(STORAGE_KEY_QANSWERS);
+      if (savedQa) state.qAnswers = JSON.parse(savedQa);
       const savedUi = localStorage.getItem(STORAGE_KEY_UI);
       if (savedUi) {
         const ui = JSON.parse(savedUi);
+        if (ui.exam) state.exam = ui.exam;
         if (ui.year) state.year = ui.year;
         if (ui.textId) state.textId = ui.textId;
         if (typeof ui.autoCollectWeak === "boolean") state.autoCollectWeak = ui.autoCollectWeak;
@@ -43,6 +48,12 @@
     } catch (e) {}
   }
 
+  function saveQAnswers() {
+    try {
+      localStorage.setItem(STORAGE_KEY_QANSWERS, JSON.stringify(state.qAnswers));
+    } catch (e) {}
+  }
+
   function saveNotebook() {
     try {
       localStorage.setItem(STORAGE_KEY_NOTEBOOK, JSON.stringify(state.notebook));
@@ -55,6 +66,7 @@
       localStorage.setItem(
         STORAGE_KEY_UI,
         JSON.stringify({
+          exam: state.exam,
           year: state.year,
           textId: state.textId,
           autoCollectWeak: state.autoCollectWeak,
@@ -81,8 +93,12 @@
       .replace(/"/g, "&quot;");
   }
 
-  function getYearObj(year) {
-    return BANK.find((y) => Number(y.year) === Number(year)) || BANK[0];
+  function getYearObj(year, exam = state.exam) {
+    let found = BANK.find((y) => Number(y.year) === Number(year) && (!exam || y.exam === exam));
+    if (!found) {
+      found = BANK.find((y) => !exam || y.exam === exam) || BANK[0];
+    }
+    return found;
   }
 
   function getCurrentPassage() {
@@ -289,9 +305,34 @@
     }
   }
 
+  function removeNotebookItem(id, silent = false) {
+    const idx = state.notebook.findIndex((x) => x.id === id);
+    if (idx >= 0) {
+      const removed = state.notebook.splice(idx, 1)[0];
+      saveNotebook();
+      if (!silent) showToast(`已从单词本移除：${removed.term}`);
+      return true;
+    }
+    return false;
+  }
+
+  function toggleNotebookItem(entry, silent = false) {
+    if (isInNotebook(entry.kind, entry.term, entry.sentId)) {
+      removeNotebookItem(entry.id, silent);
+      return false;
+    } else {
+      upsertNotebookItem(entry, silent);
+      return true;
+    }
+  }
+
   function collectSentenceWeaknesses(sent, userZh, evalRes, silent = true) {
     let addedCount = 0;
     const sourceLabel = `${state.year} Text ${state.textId} · ${sent.code}`;
+
+    // Only auto-collect when the sentence translation has actual mistakes or omissions (score < 85)
+    // If user's translation is already good (score >= 85), do not spam notebook with items that might have been phrased differently
+    if (evalRes.score >= 85) return addedCount;
 
     (evalRes.vocabResults || []).forEach((v) => {
       if (!v.hit) {
@@ -450,22 +491,57 @@
   // Rendering Functions
   // =========================================================================
   function renderHeaderControls() {
-    const yearSel = document.getElementById("yearSelect");
-    if (yearSel && !yearSel.options.length) {
-      BANK.forEach((y) => {
+    const examSel = document.getElementById("examSelect");
+    if (examSel) {
+      examSel.value = state.exam;
+      if (!examSel._bound) {
+        examSel._bound = true;
+        examSel.addEventListener("change", (e) => {
+          state.exam = e.target.value;
+          // Refresh available years for this exam
+          refreshYearOptions();
+          state.showReport = false;
+          saveUi();
+          renderAll();
+        });
+      }
+    }
+
+    function refreshYearOptions() {
+      const yearSel = document.getElementById("yearSelect");
+      if (!yearSel) return;
+      const filteredYears = BANK.filter((y) => y.exam === state.exam);
+      yearSel.innerHTML = "";
+      filteredYears.forEach((y) => {
         const opt = document.createElement("option");
         opt.value = y.year;
-        opt.textContent = `${y.year} 年 · ${y.exam}`;
+        opt.textContent = `${y.year} 年`;
         yearSel.appendChild(opt);
       });
-      yearSel.addEventListener("change", (e) => {
-        state.year = Number(e.target.value);
-        state.showReport = false;
-        saveUi();
-        renderAll();
-      });
+      // Check if state.year exists in this exam
+      const exists = filteredYears.some((y) => Number(y.year) === Number(state.year));
+      if (!exists && filteredYears.length > 0) {
+        state.year = Number(filteredYears[0].year);
+      }
+      yearSel.value = state.year;
     }
-    if (yearSel) yearSel.value = state.year;
+
+    const yearSel = document.getElementById("yearSelect");
+    if (yearSel) {
+      if (!yearSel.options.length) {
+        refreshYearOptions();
+      }
+      if (!yearSel._bound) {
+        yearSel._bound = true;
+        yearSel.addEventListener("change", (e) => {
+          state.year = Number(e.target.value);
+          state.showReport = false;
+          saveUi();
+          renderAll();
+        });
+      }
+      yearSel.value = state.year;
+    }
 
     const pillsWrap = document.getElementById("textPills");
     if (pillsWrap) {
@@ -1065,7 +1141,7 @@
         const vObj = (s.vocab || []).find((v) => v.word === word);
         if (!vObj) return;
         const rec = state.records[sid] || {};
-        upsertNotebookItem({
+        toggleNotebookItem({
           id: makeNotebookId("vocab", vObj.word, s.id),
           sentId: s.id,
           kind: "vocab",
@@ -1092,7 +1168,7 @@
         const pObj = (s.patterns || []).find((p) => p.name === patName);
         if (!pObj) return;
         const rec = state.records[sid] || {};
-        upsertNotebookItem({
+        toggleNotebookItem({
           id: makeNotebookId("pattern", pObj.name, s.id),
           sentId: s.id,
           kind: "pattern",
@@ -1215,8 +1291,8 @@
                 ${
                   picked
                     ? `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--border-light);font-size:13px;color:var(--ink-secondary);">
-                        <div><strong>选项译文：</strong>${escHtml(opt.zh || opt[1] || "")}</div>
-                        <div style="margin-top:2px;color:${letter === q.answer ? "var(--accent-green)" : "var(--ink-muted)"};"><strong>命题意图解析：</strong>${escHtml(opt.reason || opt[2] || "")}</div>
+                        ${(opt.zh || opt[1]) ? `<div><strong>选项译文：</strong>${escHtml(opt.zh || opt[1])}</div>` : ""}
+                        ${(opt.reason || opt[2]) ? `<div style="margin-top:2px;color:${letter === q.answer ? "var(--accent-green)" : "var(--ink-muted)"};"><strong>命题意图解析：</strong>${escHtml(opt.reason || opt[2])}</div>` : ""}
                       </div>`
                     : ""
                 }
@@ -1268,6 +1344,7 @@
     container.querySelectorAll("[data-qkey]").forEach((el) => {
       el.addEventListener("click", () => {
         state.qAnswers[el.dataset.qkey] = el.dataset.letter;
+        saveQAnswers();
         renderAll();
       });
     });
@@ -1277,6 +1354,7 @@
         const k = btn.dataset.toggleQ;
         if (state.qAnswers[k]) delete state.qAnswers[k];
         else state.qAnswers[k] = btn.dataset.ans;
+        saveQAnswers();
         renderAll();
       });
     });
