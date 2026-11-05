@@ -1888,6 +1888,33 @@ button, input, select, textarea {
   gap: 12px;
 }
 
+.footer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.footer-desc {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.footer-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 12px;
+  color: var(--ink-secondary);
+}
+
+.footer-stat-number {
+  font-weight: 700;
+  color: var(--brand-navy);
+  padding: 0 2px;
+  font-variant-numeric: tabular-nums;
+}
+
 .footer-sep {
   margin: 0 8px;
   opacity: 0.5;
@@ -1921,6 +1948,12 @@ button, input, select, textarea {
     flex-direction: column;
     text-align: center;
     gap: 8px;
+  }
+  .footer-info,
+  .footer-desc,
+  .footer-stats,
+  .footer-links {
+    justify-content: center;
   }
 }
 
@@ -2138,18 +2171,20 @@ button, input, select, textarea {
 }
 
 .btn-side-menu-trigger {
-  background: none;
+  background: transparent;
   border: 1px solid var(--border-light);
   border-radius: var(--radius-sm);
-  padding: 6px 12px;
-  font-size: 13px;
-  font-weight: 700;
+  height: 34px;
+  padding: 0 11px;
+  font-size: 15px;
+  line-height: 1;
   color: var(--brand-navy);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
   transition: all 0.15s ease;
+  margin-left: 4px;
 }
 
 .btn-side-menu-trigger:hover {

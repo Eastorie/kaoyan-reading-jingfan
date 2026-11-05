@@ -4,24 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>考研英语阅读逐句精翻实训与智能单词本（英一/英二 2010–2026）</title>
-  <link rel="stylesheet" href="styles.css?v=1793874000" />
+  <link rel="stylesheet" href="styles.css?v=1793875000" />
   <link rel="stylesheet" href="print.css" media="print" />
+  <script defer src="https://events.vercount.one/js"></script>
 </head>
 <body>
   <!-- Sticky Header -->
   <header class="top-header">
     <div class="header-inner">
       <div class="brand-group">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div class="brand-mark">精翻</div>
-          <div class="brand-titles">
-            <h1>考研英语阅读逐句精翻实训台</h1>
-            <p>英语一 / 英语二（2010–2026）全真题库 · 逐句输入智能批改 · 错词句型本 PDF 导出</p>
-          </div>
+        <div class="brand-mark">精翻</div>
+        <div class="brand-titles">
+          <h1>考研英语阅读逐句精翻实训台</h1>
+          <p>英语一 / 英语二（2010–2026）全真题库 · 逐句输入智能批改 · 错词句型本 PDF 导出</p>
         </div>
-        <button class="btn-side-menu-trigger" id="btnToggleSideMenu" aria-label="菜单" title="功能与设置菜单">
-          <span>☰</span>
-        </button>
       </div>
 
       <div class="selector-group">
@@ -45,6 +41,9 @@
         </button>
         <button class="nav-tab" id="btnHeaderFeedback" title="提交题目勘误或功能建议" style="color:var(--brand-navy);border-left:1px solid var(--border-light);margin-left:6px;padding-left:14px;">
           <span>💬 问题反馈</span>
+        </button>
+        <button class="btn-side-menu-trigger" id="btnToggleSideMenu" aria-label="功能与设置菜单" title="打开功能与设置菜单">
+          <span>☰</span>
         </button>
       </nav>
     </div>
@@ -86,9 +85,20 @@
   <footer class="app-footer no-print">
     <div class="footer-inner">
       <div class="footer-info">
-        <span>考研英语阅读逐句精翻实训台 · 纯前端自学研读辅助工具</span>
-        <span class="footer-sep">|</span>
-        <span>本地存储 · 零个人信息采集</span>
+        <div class="footer-desc">
+          <span>考研英语阅读逐句精翻实训台 · 纯前端自学研读辅助工具</span>
+          <span class="footer-sep">|</span>
+          <span>本地存储 · 零个人信息采集</span>
+        </div>
+        <div class="footer-stats" id="footerStats">
+          <span id="busuanzi_container_site_uv" style="display:none;">
+            本站已有 <strong id="busuanzi_value_site_uv" class="footer-stat-number">--</strong> 位考研人使用
+          </span>
+          <span id="busuanzi_container_site_pv" style="display:none;">
+            <span class="footer-sep">·</span>
+            累计精翻打卡 <strong id="busuanzi_value_site_pv" class="footer-stat-number">--</strong> 次
+          </span>
+        </div>
       </div>
       <div class="footer-links">
         <button class="footer-link-btn" id="btnOpenFeedback">💬 问题反馈与勘误</button>
@@ -269,7 +279,7 @@
       document.write('<script src="data.js"><\/script>');
     }
   </script>
-  <script src="app.js?v=1793874000"></script>
-  <script src="scroll-header.js?v=1793874000"></script>
+  <script src="app.js?v=1793875000"></script>
+  <script src="scroll-header.js?v=1793875000"></script>
 </body>
 </html>
