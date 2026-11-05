@@ -719,16 +719,34 @@
   }
 
   function renderSidebar() {
+    const sidePanel = document.querySelector(".side-panel");
+    const metaCard = document.getElementById("passageMetaCard");
+    const progCard = document.getElementById("progressCard");
+
+    // In notebook tab: hide entire sidePanel for full-width focus
+    if (state.activeTab === "notebook") {
+      if (sidePanel) sidePanel.style.display = "none";
+      return;
+    } else {
+      if (sidePanel) sidePanel.style.display = "flex";
+    }
+
+    // In overview (导图) and questions (题目精析): NO progress card!
+    if (state.activeTab !== "practice") {
+      if (progCard) progCard.style.display = "none";
+    } else {
+      if (progCard) progCard.style.display = "block";
+    }
+
     const passage = getCurrentPassage();
     if (!passage) return;
     const sents = getPassageSentences(passage);
     const doneSents = sents.filter((s) => state.records[s.id] && state.records[s.id].submitted);
     const pct = sents.length ? Math.round((doneSents.length / sents.length) * 100) : 0;
 
-    const metaCard = document.getElementById("passageMetaCard");
     if (metaCard) {
       metaCard.innerHTML = `
-        <span class="passage-meta-tag">${state.year} 英语（二） · Text ${passage.id}</span>
+        <span class="passage-meta-tag">${state.year} ${escHtml(state.exam)} · Text ${passage.id}</span>
         <h2 class="passage-title">${escHtml(passage.title)}</h2>
         <div class="meta-list">
           <div class="meta-item"><strong>题材体裁：</strong>${escHtml(passage.genre)}</div>
@@ -738,8 +756,7 @@
       `;
     }
 
-    const progCard = document.getElementById("progressCard");
-    if (progCard) {
+    if (progCard && state.activeTab === "practice") {
       progCard.innerHTML = `
         <div class="progress-header">
           <span>本篇精翻进度</span>
@@ -763,13 +780,13 @@
         </div>
         <div class="side-actions">
           <button class="btn btn-primary" id="btnFinishPassage">
-            整篇交卷打分与诊断报告
+            整篇交卷与诊断
           </button>
           <button class="btn btn-soft" id="btnDemoFill">
-            填入模拟作答（快速体验批改）
+            填入模拟作答
           </button>
           <button class="btn btn-outline" id="btnResetPassage">
-            清空本篇作答记录
+            重置本篇记录
           </button>
         </div>
       `;
@@ -910,10 +927,10 @@
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
               <button class="btn btn-amber" id="btnCollectAllPassageWeak">
-                一键收录本篇全部错漏词句 (${rep.missedVocabAll.length + rep.missedPatternAll.length})
+                一键收录错词句 (${rep.missedVocabAll.length + rep.missedPatternAll.length})
               </button>
               <button class="btn btn-primary" id="btnGoToNotebookFromReport">
-                查看单词本并导出 PDF
+                生词本 · 导出 PDF
               </button>
             </div>
           </div>
@@ -1045,15 +1062,15 @@
 
       <div class="workspace-toolbar">
         <div class="toolbar-left">
-          <strong style="color:var(--brand-navy);">逐句精翻实训模式：</strong>
-          <span style="font-size:13px;color:var(--ink-secondary);">在英文原句下方输入你的译文，点击“提交并对照答案”（或按 Ctrl/⌘+Enter）即可显示逐块精译与评分诊断。</span>
+          <strong style="color:var(--brand-navy);">逐句精翻实训</strong>
+          <span class="desktop-only" style="font-size:13px;color:var(--ink-secondary);">：原句下方输入译文，提交即可对照逐块采分点与评分。</span>
         </div>
         <div class="toolbar-right">
           <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-secondary);cursor:pointer;">
             <input type="checkbox" id="chkAutoCollect" ${state.autoCollectWeak ? "checked" : ""} />
-            自动将未译出/译错词句收入单词本
+            自动收录薄弱词句
           </label>
-          <button class="btn btn-sm btn-outline" id="btnRevealAll">展开全部参考答案</button>
+          <button class="btn btn-sm btn-outline" id="btnRevealAll">全部参考</button>
         </div>
       </div>
       ${reportHtml}
@@ -1124,7 +1141,7 @@
         .map(
           (c) => `
           <div class="chunk-chip ${c.hit ? "hit" : "miss"}">
-            <span class="chunk-status-tag">${c.hit ? "✓ 已译出" : "! 待强化"}</span>
+            <span class="chunk-status-tag">${c.hit ? "✓" : "!"}</span>
             <div class="chunk-en">${escHtml(c.en)}</div>
             <div class="chunk-zh">${escHtml(c.zh)}</div>
           </div>
@@ -1139,10 +1156,10 @@
             <button class="vocab-item-pill ${!v.hit ? "missed" : ""} ${inNb ? "in-notebook" : ""}"
               data-add-vocab="${escHtml(v.word)}"
               data-sent-id="${s.id}"
-              title="点击加入或更新至单词本">
+              title="${inNb ? "已收藏（点击更新）" : "点击收藏至生词本"}">
               <strong>${escHtml(v.word)}</strong>
               <span>${escHtml(v.meaning)}</span>
-              <span style="font-weight:700;">${inNb ? "★ 已收录" : !v.hit ? `[${v.status} · +单词本]` : "+收藏"}</span>
+              <span class="star-icon" aria-label="${inNb ? "已收藏" : "未收藏"}">${inNb ? "★" : "☆"}</span>
             </button>
           `;
         })
@@ -1155,9 +1172,9 @@
             <button class="vocab-item-pill ${!p.hit ? "missed" : ""} ${inNb ? "in-notebook" : ""}"
               data-add-pattern="${escHtml(p.name)}"
               data-sent-id="${s.id}"
-              title="点击将该句型结构加入单词与句型本">
+              title="${inNb ? "已在句型本（点击更新）" : "点击收藏至句型本"}">
               <strong>句型：${escHtml(p.name)}</strong>
-              <span>${inNb ? "★ 已在句型本" : !p.hit ? `[${p.status} · +句型本]` : "+收藏句型"}</span>
+              <span class="star-icon" aria-label="${inNb ? "已收藏" : "未收藏"}">${inNb ? "★" : "☆"}</span>
             </button>
           `;
         })
@@ -1167,28 +1184,23 @@
         <div class="answer-panel">
           <div class="ref-zh-box">
             <div class="ref-label">
-              <span>参考标准精译（对照你的译文）</span>
+              <span>参考精译</span>
               <span>${escHtml(ev.feedback)}</span>
             </div>
             <div class="ref-zh-text">${escHtml(s.zh)}</div>
           </div>
 
-          <div>
-            <div style="font-size:12px;font-weight:700;color:var(--ink-secondary);margin-bottom:6px;">
-              逐语块切分与采分点核对（绿色=已译出，橙色=漏译或偏差）：
-            </div>
-            <div class="chunks-grid">
-              ${chunksHtml}
-            </div>
+          <div class="chunks-grid">
+            ${chunksHtml}
           </div>
 
           <div class="syntax-note-box">
-            <strong>句法与阅读精析：</strong>${escHtml(s.note)}
+            <strong>句法精析：</strong>${escHtml(s.note)}
           </div>
 
           <div class="diag-collect-box">
             <div class="diag-title">
-              <span>本句核心词汇与句型诊断（点击任意词条可随时加入/同步至单词本）：</span>
+              <span>核心词汇与句型：</span>
             </div>
             <div class="vocab-chips-row">
               ${vocabPillsHtml}
@@ -1207,7 +1219,7 @@
             ${patternPills}
           </div>
           <div style="display:flex;align-items:center;gap:6px;">
-            <button class="btn-feedback-mini" data-feedback-sent="${s.id}" data-sent-code="${s.code}" title="本句翻译/采分点勘误反馈">💬 勘误</button>
+            <button class="btn-feedback-mini" data-feedback-sent="${s.id}" data-sent-code="${s.code}" title="勘误与纠错反馈" aria-label="勘误"><span class="icon-fb">🚩</span><span class="text-fb desktop-only">勘误</span></button>
             ${scoreBadgeHtml}
           </div>
         </div>
@@ -1227,12 +1239,10 @@
             <div class="input-btns">
               ${
                 isSubmitted
-                  ? `<button class="btn btn-sm btn-outline" data-regrade="${s.id}">修改后重新评分</button>`
-                  : `<button class="btn btn-sm btn-outline" data-peek="${s.id}">直接看答案（记入待攻克）</button>`
+                  ? `<button class="btn btn-sm btn-primary" data-submit="${s.id}">重判</button>`
+                  : `<button class="btn btn-sm btn-outline" data-peek="${s.id}">看答案</button>
+                     <button class="btn btn-sm btn-primary" data-submit="${s.id}">提交</button>`
               }
-              <button class="btn btn-sm btn-primary" data-submit="${s.id}">
-                ${isSubmitted ? "更新译文并重判" : "提交并显示答案"}
-              </button>
             </div>
           </div>
         </div>
@@ -1384,7 +1394,7 @@
 
     container.innerHTML = `
       <div class="card">
-        <span class="passage-meta-tag">${state.year} 英语（二） · Text ${passage.id} · 01 篇章综述与逻辑导图</span>
+        <span class="passage-meta-tag">${state.year} ${escHtml(state.exam)} · Text ${passage.id} · 篇章综述与逻辑导图</span>
         <h2 style="font-size:20px;margin:6px 0 12px;color:var(--ink-primary);">${escHtml(passage.title)}</h2>
         <p style="font-size:14.5px;color:var(--brand-navy);background:var(--brand-blue-soft);padding:12px 15px;border-radius:var(--radius-sm);font-weight:600;margin-bottom:18px;">
           全文逻辑主线：${escHtml(passage.logic)}
@@ -1462,9 +1472,9 @@
                 <span style="font-size:12.5px;color:var(--ink-muted);margin-left:8px;">定位句：${escHtml(q.loc)}</span>
               </div>
               <div style="display:flex;align-items:center;gap:6px;">
-                <button class="btn-feedback-mini" data-feedback-q="第 ${q.n} 题 (${escHtml(q.kind)})" title="本题题干/选项/解析勘误">💬 勘误</button>
+                <button class="btn-feedback-mini" data-feedback-q="第 ${q.n} 题" title="题目勘误反馈" aria-label="勘误"><span class="icon-fb">🚩</span><span class="text-fb desktop-only">勘误</span></button>
                 <button class="btn btn-sm btn-outline" data-toggle-q="${qKey}" data-ans="${q.answer}">
-                  ${picked ? "隐藏解析重做" : "直接显示答案解析"}
+                  ${picked ? "重做" : "看解析"}
                 </button>
               </div>
             </div>
@@ -1490,8 +1500,8 @@
     container.innerHTML = `
       <div class="workspace-toolbar">
         <div>
-          <strong style="color:var(--brand-navy);">真题阅读选项精析（Q${passage.questions[0]?.n || 21}–Q${passage.questions[passage.questions.length - 1]?.n || 25}）：</strong>
-          <span style="font-size:13px;color:var(--ink-secondary);">点击任一选项即可完成作答并展开四项精译与正误排除解析。</span>
+          <strong style="color:var(--brand-navy);">真题阅读选项精析</strong>
+          <span class="desktop-only" style="font-size:13px;color:var(--ink-secondary);">（Q${passage.questions[0]?.n || 21}–Q${passage.questions[passage.questions.length - 1]?.n || 25}）：点击选项展开解析与排除思路</span>
         </div>
       </div>
       ${qCards}
@@ -1547,8 +1557,8 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: "考研英语（二）阅读精翻 · 错题单词与长难句型复盘本",
-          subtitle: `收录范围：2015–2026 真题精翻实训 · 共 ${targetItems.length} 条重点词句`,
+          title: `考研${state.exam}阅读精翻 · 错题单词与长难句型复盘本`,
+          subtitle: `收录范围：真题精翻实训 · 共 ${targetItems.length} 条重点词句`,
           items: targetItems,
         }),
       });
@@ -1557,7 +1567,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `考研英语二-阅读精翻单词与句型本-${targetItems.length}条.pdf`;
+      a.download = `考研${state.exam}-阅读精翻生词与句型本-${targetItems.length}条.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -1947,10 +1957,10 @@
 
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:6px;" class="no-print">
               <button class="btn btn-sm ${item.mastered ? "btn-soft" : "btn-outline"}" data-toggle-master="${escHtml(item.id)}">
-                ${item.mastered ? "✓ 已掌握（点击取消）" : "标记为已掌握"}
+                ${item.mastered ? "✓ 已掌握" : "标为掌握"}
               </button>
-              <button class="btn btn-sm btn-outline" style="color:var(--accent-red);" data-remove-nb="${escHtml(item.id)}">
-                移除
+              <button class="btn btn-sm btn-outline" style="color:var(--accent-red);border-color:transparent;" data-remove-nb="${escHtml(item.id)}" title="移除此条">
+                ✕ 移除
               </button>
             </div>
           </article>
@@ -1961,22 +1971,22 @@
     container.innerHTML = `
       <section class="notebook-header-card">
         <div>
-          <h2>考研英语（二）精翻错题 · 单词与句型本</h2>
-          <p>自动汇集逐句精翻中未译出、翻译偏差的核心词汇短语与长难句型，支持一键导出高清 A4 复习 PDF</p>
+          <h2>${escHtml(state.exam)} · 错词与句型本</h2>
+          <p>自动汇集逐句精翻中未译出、翻译偏差的核心词汇短语与长难句型，支持一键导出 A4 打印 PDF</p>
         </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;" class="no-print">
-          <button class="btn btn-amber" id="btnExportPdfMain" style="font-size:14.5px;padding:10px 18px;">
-            导出单词与句型本 PDF (${filtered.length || state.notebook.length} 条)
+        <div style="display:flex;gap:8px;flex-wrap:wrap;" class="no-print">
+          <button class="btn btn-amber" id="btnExportPdfMain" style="font-size:14px;padding:8px 16px;">
+            📄 导出 PDF (${filtered.length || state.notebook.length} 条)
           </button>
           <button class="btn btn-outline" id="btnExportBackup" style="background:rgba(255,255,255,0.12);color:#fff;border-color:rgba(255,255,255,0.3);">
-            📥 备份学习记录 (JSON)
+            📥 备份 (JSON)
           </button>
           <button class="btn btn-outline" id="btnImportBackup" style="background:rgba(255,255,255,0.12);color:#fff;border-color:rgba(255,255,255,0.3);">
-            📤 恢复本地备份
+            📤 恢复
           </button>
           <input type="file" id="inputRestoreBackupFile" accept=".json" style="display:none;" />
           <button class="btn btn-outline" id="btnShowAddCustom" style="background:rgba(255,255,255,0.12);color:#fff;border-color:rgba(255,255,255,0.3);">
-            + 手动添加词条/句型
+            + 添加
           </button>
         </div>
       </section>
@@ -2001,16 +2011,16 @@
       <section class="notebook-controls no-print">
         <div class="filter-pills">
           <button class="filter-pill ${state.nbFilter === "all" ? "active" : ""}" data-nb-filter="all">
-            全部收录 (${state.notebook.length})
+            全部 (${state.notebook.length})
           </button>
           <button class="filter-pill ${state.nbFilter === "vocab" ? "active" : ""}" data-nb-filter="vocab">
-            核心单词/短语 (${vocabCnt})
+            单词 (${vocabCnt})
           </button>
           <button class="filter-pill ${state.nbFilter === "pattern" ? "active" : ""}" data-nb-filter="pattern">
-            长难句型结构 (${patCnt})
+            句型 (${patCnt})
           </button>
           <button class="filter-pill ${state.nbFilter === "unmastered" ? "active" : ""}" data-nb-filter="unmastered">
-            待重点攻克 (${unmasteredCnt})
+            待攻克 (${unmasteredCnt})
           </button>
         </div>
 
@@ -2157,6 +2167,10 @@
 
   function renderAll() {
     syncHeaderHeight();
+    const mainContainer = document.querySelector(".main-container");
+    if (mainContainer) {
+      mainContainer.classList.toggle("tab-notebook", state.activeTab === "notebook");
+    }
     renderHeaderControls();
     renderSidebar();
     const workspace = document.getElementById("workspaceArea");

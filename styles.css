@@ -1,4 +1,5 @@
 :root {
+  --header-height: 122px;
   --bg-page: #F5F7FA;
   --bg-card: #FFFFFF;
   --bg-subtle: #EEF3F8;
@@ -208,6 +209,11 @@ button, input, select, textarea {
   grid-template-columns: 290px minmax(0, 1fr);
   gap: 22px;
   align-items: start;
+}
+
+.main-container.tab-notebook {
+  grid-template-columns: 1fr;
+  max-width: 1040px;
 }
 
 /* Left Sidebar */
@@ -771,6 +777,26 @@ button, input, select, textarea {
   color: var(--brand-navy);
 }
 
+.star-icon {
+  font-size: 13.5px;
+  line-height: 1;
+  color: var(--ink-muted);
+  transition: transform 0.15s ease, color 0.15s ease;
+  margin-left: 3px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.vocab-item-pill.in-notebook .star-icon {
+  color: #D97706;
+  font-weight: 800;
+  text-shadow: 0 0 1px rgba(217, 119, 6, 0.4);
+}
+
+.vocab-item-pill:hover .star-icon {
+  transform: scale(1.18);
+}
+
 /* Whole-Passage Diagnostic Report Card */
 .report-card {
   background: linear-gradient(180deg, #FFFFFF 0%, #F7FAFE 100%);
@@ -1153,7 +1179,7 @@ button, input, select, textarea {
     font-size: 12.5px;
   }
 
-  .nav-tabs.desktop-only {
+  .desktop-only {
     display: none !important;
   }
 
@@ -1462,6 +1488,11 @@ button, input, select, textarea {
     gap: 2px;
     border-radius: 8px;
     min-height: 44px;
+  }
+
+  .mob-tab-icon {
+    font-size: 16px;
+    line-height: 1;
   }
 
   .mob-tab.active {
@@ -1816,4 +1847,13 @@ button, input, select, textarea {
   background: var(--brand-blue-soft);
   color: var(--brand-navy);
   border-color: var(--brand-navy);
+}
+
+@media (max-width: 768px) {
+  .btn-feedback-mini {
+    padding: 3px 6px;
+    font-size: 13px;
+    border-radius: 6px;
+    background: rgba(241, 245, 249, 0.6);
+  }
 }
