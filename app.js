@@ -19,6 +19,7 @@
     autoCollectWeak: true,
     showReport: false,
     nbFilter: "all", // 'all' | 'vocab' | 'pattern' | 'unmastered'
+    nbYear: "all", // 'all' | 2018 | 2019 ...
     nbSearch: "",
     qAnswers: {}, // { '2015-T1-Q21': 'A' }
     records: {}, // { '2015-T1-P1-S1': { userZh, submitted, evalResult, ts } }
@@ -1397,7 +1398,7 @@
 
     container.innerHTML = `
       <div class="card">
-        <span class="passage-meta-tag">${state.year} ${escHtml(state.exam)} · Text ${passage.id} · 篇章综述与逻辑导图</span>
+        <span class="passage-meta-tag">${state.year} ${escHtml(state.exam)} · Text ${passage.id} · 篇章脉络与逻辑导读</span>
         <h2 style="font-size:20px;margin:6px 0 12px;color:var(--ink-primary);">${escHtml(passage.title)}</h2>
         <p style="font-size:14.5px;color:var(--brand-navy);background:var(--brand-blue-soft);padding:12px 15px;border-radius:var(--radius-sm);font-weight:600;margin-bottom:18px;">
           全文逻辑主线：${escHtml(passage.logic)}
@@ -1426,6 +1427,99 @@
     `;
   }
 
+  function highlightKeywords(text, keywordsWithMeaning) {
+    if (!text) return "";
+    if (!keywordsWithMeaning || !keywordsWithMeaning.length) return escHtml(text);
+    const sorted = [...keywordsWithMeaning]
+      .filter((k) => k.word && k.word.trim().length > 1)
+      .sort((a, b) => b.word.length - a.word.length);
+    if (!sorted.length) return escHtml(text);
+
+    const escapedWords = sorted.map((k) => k.word.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const regex = new RegExp(`\\b(${escapedWords.join("|")})\\b`, "gi");
+
+    let lastIndex = 0;
+    let html = "";
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+      html += escHtml(text.substring(lastIndex, match.index));
+      const matchedWord = match[0];
+      const kwObj = sorted.find((k) => k.word.toLowerCase() === matchedWord.toLowerCase()) || { meaning: "" };
+      html += `<mark class="q-kw-emphasis" title="${escHtml(kwObj.meaning || "考点/态度重点词")}">${escHtml(matchedWord)}</mark>`;
+      lastIndex = regex.lastIndex;
+    }
+    html += escHtml(text.substring(lastIndex));
+    return html;
+  }
+
+  function resolveQuestionParagraph(q, passage) {
+    if (!passage || !passage.paragraphs || !passage.paragraphs.length) return null;
+
+    const loc = q.loc || "";
+    const ev = q.evidence || "";
+    const combined = `${loc} ${ev}`;
+
+    // 1. Search for P(\d+)(?:-S(\d+))?
+    const m = [...combined.matchAll(/P(\d+)(?:-S(\d+))?/g)];
+    if (m.length > 0) {
+      const pNum = parseInt(m[0][1], 10);
+      const sCodes = m.map((x) => (x[2] ? `P${x[1]}-S${x[2]}` : null)).filter(Boolean);
+      const pIdx = pNum - 1;
+      if (passage.paragraphs[pIdx]) {
+        return {
+          paraNum: pNum,
+          paragraph: passage.paragraphs[pIdx],
+          targetSentCodes: sCodes.length > 0 ? Array.from(new Set(sCodes)) : [passage.paragraphs[pIdx].sentences[0]?.code].filter(Boolean),
+        };
+      }
+    }
+
+    // 2. Search evidence text words in sentences
+    if (ev) {
+      const words = ev.toLowerCase().replace(/[^\w\s]/g, " ").split(/\s+/).filter((w) => w.length > 4);
+      if (words.length >= 2) {
+        for (let pIdx = 0; pIdx < passage.paragraphs.length; pIdx++) {
+          const para = passage.paragraphs[pIdx];
+          for (const s of para.sentences) {
+            const sEn = (s.en || "").toLowerCase();
+            const matchedCount = words.slice(0, 5).filter((w) => sEn.includes(w)).length;
+            if (matchedCount >= 2) {
+              return {
+                paraNum: pIdx + 1,
+                paragraph: para,
+                targetSentCodes: [s.code],
+              };
+            }
+          }
+        }
+      }
+    }
+
+    // 3. Fallback from question stem (e.g. Paragraph 3)
+    const stemMatch = (q.stem || "").match(/Paragraph\s*(\d+)/i);
+    if (stemMatch) {
+      const pNum = parseInt(stemMatch[1], 10);
+      if (passage.paragraphs[pNum - 1]) {
+        return {
+          paraNum: pNum,
+          paragraph: passage.paragraphs[pNum - 1],
+          targetSentCodes: [passage.paragraphs[pNum - 1].sentences[0]?.code].filter(Boolean),
+        };
+      }
+    }
+
+    // 4. Default: sequential paragraph (1..5)
+    const qIndex = q.n ? ((q.n - 1) % 5) : 0;
+    const defaultPNum = Math.min(qIndex + 1, passage.paragraphs.length);
+    const para = passage.paragraphs[defaultPNum - 1] || passage.paragraphs[0];
+    return {
+      paraNum: defaultPNum,
+      paragraph: para,
+      targetSentCodes: [para.sentences[0]?.code].filter(Boolean),
+    };
+  }
+
   // =========================================================================
   // Tab 03: Reading Comprehension Questions
   // =========================================================================
@@ -1439,6 +1533,51 @@
         const qKey = `${state.year}-${examTag}-T${passage.id}-Q${q.n}`;
         const picked = state.qAnswers[qKey];
         const letters = ["A", "B", "C", "D"];
+        const qTarget = resolveQuestionParagraph(q, passage);
+
+        let paraBoxHtml = "";
+        if (qTarget && qTarget.paragraph) {
+          const para = qTarget.paragraph;
+          const targetSentCodes = qTarget.targetSentCodes || [];
+
+          const sentsHtml = para.sentences
+            .map((s) => {
+              const isLocSent = targetSentCodes.includes(s.code);
+              if (!picked) {
+                return `<span class="q-para-sent"><span class="q-sent-code">[${s.code}]</span>${escHtml(s.en)} </span>`;
+              } else {
+                if (isLocSent) {
+                  const kwList = (s.vocab || []).map((v) => ({ word: v.word, meaning: v.meaning }));
+                  const highlightedEn = highlightKeywords(s.en, kwList);
+                  return `<mark class="q-loc-highlighter"><span class="q-sent-code-hl">[${s.code} 题眼定位]</span>${highlightedEn}</mark> `;
+                } else {
+                  return `<span class="q-para-sent dim"><span class="q-sent-code">[${s.code}]</span>${escHtml(s.en)} </span>`;
+                }
+              }
+            })
+            .join("");
+
+          paraBoxHtml = `
+            <div class="q-para-box ${picked ? "is-analyzed" : "is-reading"}">
+              <div class="q-para-header">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <span class="para-badge">Paragraph ${qTarget.paraNum}</span>
+                  <span class="q-para-status-text">
+                    ${
+                      picked
+                        ? `<span class="q-hl-tag">🎯 题眼定位已高亮（${targetSentCodes.join("、") || "定位句"}）</span>`
+                        : `<span class="q-hint-tag">📖 对应题源段落（选择答案后自动荧光高亮题眼）</span>`
+                    }
+                  </span>
+                </div>
+                ${picked && para.summary ? `<span class="q-para-summary-text">段落主旨：${escHtml(para.summary)}</span>` : ""}
+              </div>
+              <div class="q-para-text">
+                ${sentsHtml}
+              </div>
+            </div>
+          `;
+        }
 
         const optsHtml = (q.options || [])
           .map((opt, idx) => {
@@ -1472,7 +1611,7 @@
             <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
               <div>
                 <span class="para-badge">Q${q.n} · ${escHtml(q.kind)}</span>
-                <span style="font-size:12.5px;color:var(--ink-muted);margin-left:8px;">定位句：${escHtml(q.loc)}</span>
+                <span style="font-size:12.5px;color:var(--ink-muted);margin-left:8px;">定位：${escHtml(q.loc)}</span>
               </div>
               <div style="display:flex;align-items:center;gap:6px;">
                 <button class="btn-feedback-mini" data-feedback-q="第 ${q.n} 题" title="题目勘误反馈" aria-label="勘误"><span class="icon-fb">🚩</span><span class="text-fb desktop-only">勘误</span></button>
@@ -1481,10 +1620,14 @@
                 </button>
               </div>
             </div>
+
+            <!-- Corresponding Paragraph with Fluorescent Highlighter -->
+            ${paraBoxHtml}
+
             <div style="font-family:var(--font-serif-en);font-size:16px;font-weight:600;color:var(--ink-primary);">
               ${escHtml(q.stem)}
             </div>
-            ${picked ? `<div style="font-size:14px;color:var(--brand-navy);font-weight:600;">题干译文：${escHtml(q.zh)}</div>` : ""}
+            ${picked ? `<div style="font-size:14px;color:var(--brand-navy);font-weight:600;">题干精译：${escHtml(q.zh)}</div>` : ""}
             <div style="display:flex;flex-direction:column;gap:8px;">
               ${optsHtml}
             </div>
@@ -1537,6 +1680,10 @@
       if (state.nbFilter === "vocab" && item.kind !== "vocab") return false;
       if (state.nbFilter === "pattern" && item.kind !== "pattern") return false;
       if (state.nbFilter === "unmastered" && item.mastered) return false;
+      if (state.nbYear && state.nbYear !== "all") {
+        const itemYear = item.year || (item.source && item.source.match(/\b(20\d\d)\b/) ? Number(item.source.match(/\b(20\d\d)\b/)[1]) : null);
+        if (Number(itemYear) !== Number(state.nbYear)) return false;
+      }
       if (state.nbSearch) {
         const q = state.nbSearch.toLowerCase();
         const hay = `${item.term} ${item.meaning} ${item.source} ${item.en} ${item.zh}`.toLowerCase();
@@ -1921,6 +2068,14 @@
     const patCnt = state.notebook.filter((x) => x.kind === "pattern").length;
     const unmasteredCnt = state.notebook.filter((x) => !x.mastered).length;
 
+    const yearSet = new Set();
+    state.notebook.forEach((item) => {
+      const y = item.year || (item.source && item.source.match(/\b(20\d\d)\b/) ? Number(item.source.match(/\b(20\d\d)\b/)[1]) : null);
+      if (y) yearSet.add(Number(y));
+    });
+    (getAvailableYears() || []).forEach((y) => yearSet.add(Number(y.year)));
+    const allYearsInNb = Array.from(yearSet).sort((a, b) => b - a);
+
     const cardsHtml =
       filtered.length === 0
         ? `
@@ -2028,12 +2183,16 @@
         </div>
 
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <select id="nbYearSelect" class="year-select" style="min-width:115px;" title="按年份筛选词句">
+            <option value="all" ${state.nbYear === "all" ? "selected" : ""}>全部年份</option>
+            ${allYearsInNb.map((y) => `<option value="${y}" ${String(state.nbYear) === String(y) ? "selected" : ""}>${y} 年</option>`).join("")}
+          </select>
           <input
             type="search"
             id="nbSearchInput"
             class="year-select"
-            style="min-width:210px;"
-            placeholder="搜索英文、释义或年份..."
+            style="min-width:180px;"
+            placeholder="搜索英文、释义..."
             value="${escHtml(state.nbSearch)}"
           />
           ${
@@ -2105,6 +2264,14 @@
           newIn.focus();
           newIn.setSelectionRange(newIn.value.length, newIn.value.length);
         }
+      });
+    }
+
+    const nbYearSel = document.getElementById("nbYearSelect");
+    if (nbYearSel) {
+      nbYearSel.addEventListener("change", (e) => {
+        state.nbYear = e.target.value;
+        renderAll();
       });
     }
 
