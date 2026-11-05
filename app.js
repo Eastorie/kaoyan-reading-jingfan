@@ -804,7 +804,20 @@
       })
       .join("");
 
+    const doneCount = sents.filter((s) => state.records[s.id] && state.records[s.id].submitted).length;
+    const pctVal = sents.length ? Math.round((doneCount / sents.length) * 100) : 0;
     container.innerHTML = `
+      <!-- Floating Translation Progress Indicator -->
+      <div class="floating-progress-widget" id="floatProgWidget" onclick="document.getElementById('progressCard')?.scrollIntoView({behavior:'smooth'})">
+        <div class="float-prog-circle" style="background: conic-gradient(var(--brand-navy) ${pctVal * 3.6}deg, #E2E8F0 ${pctVal * 3.6}deg);">
+          <span class="float-prog-num">${pctVal}%</span>
+        </div>
+        <div class="float-prog-text">
+          <span class="float-prog-label">全文翻译进度</span>
+          <span class="float-prog-val">已译 ${doneCount} / ${sents.length} 句</span>
+        </div>
+      </div>
+
       <div class="workspace-toolbar">
         <div class="toolbar-left">
           <strong style="color:var(--brand-navy);">逐句精翻实训模式：</strong>
@@ -870,10 +883,10 @@
     const isSubmitted = Boolean(rec.submitted && rec.evalResult);
     const ev = rec.evalResult;
 
-    let scoreBadgeHtml = `<span style="font-size:12px;color:var(--ink-muted);">待翻译作答</span>`;
+    let scoreBadgeHtml = `<div class="sent-score-badge pending" title="待翻译作答"><span class="badge-dot"></span></div>`;
     if (isSubmitted && ev) {
       const cls = ev.score >= 85 ? "high" : ev.score >= 65 ? "mid" : "low";
-      scoreBadgeHtml = `<span class="score-pill ${cls}">本句得分：${ev.score} 分</span>`;
+      scoreBadgeHtml = `<div class="sent-score-badge ${cls}" title="本句得分：${ev.score}分"><span class="score-num">${ev.score}</span></div>`;
     }
 
     const patternPills = (s.patterns || [])
@@ -978,11 +991,11 @@
             id="input-${s.id}"
             class="trans-textarea"
             data-sent-input="${s.id}"
-            placeholder="在此输入你对本句的中文翻译（输入完成后点击下方“提交并显示答案”，支持 Ctrl+Enter 快捷提交）..."
+            placeholder="在此输入中文翻译..." rows="2" style="overflow:hidden;" oninput="this.style.height='auto';this.style.height=(this.scrollHeight)+'px';"
           >${escHtml(rec.userZh || "")}</textarea>
 
           <div class="input-actions-bar">
-            <span class="input-hint">提示：涵盖核心实词与从句逻辑即可获高分，未译出词句将自动整理入单词本</span>
+            <span class="input-hint"></span>
             <div class="input-btns">
               ${
                 isSubmitted
@@ -1005,8 +1018,11 @@
     const sentMap = {};
     sents.forEach((s) => (sentMap[s.id] = s));
 
-    // Textarea draft saving & Ctrl+Enter shortcut
+    // Textarea auto-resize, draft saving & Ctrl+Enter shortcut
     container.querySelectorAll("[data-sent-input]").forEach((ta) => {
+      // Auto adjust initial height based on content
+      ta.style.height = "auto";
+      ta.style.height = Math.max(54, ta.scrollHeight) + "px";
       const sid = ta.dataset.sentInput;
       ta.addEventListener("input", () => {
         if (!state.records[sid]) state.records[sid] = { userZh: "", submitted: false };
@@ -1239,7 +1255,20 @@
       })
       .join("");
 
+    const doneCount = sents.filter((s) => state.records[s.id] && state.records[s.id].submitted).length;
+    const pctVal = sents.length ? Math.round((doneCount / sents.length) * 100) : 0;
     container.innerHTML = `
+      <!-- Floating Translation Progress Indicator -->
+      <div class="floating-progress-widget" id="floatProgWidget" onclick="document.getElementById('progressCard')?.scrollIntoView({behavior:'smooth'})">
+        <div class="float-prog-circle" style="background: conic-gradient(var(--brand-navy) ${pctVal * 3.6}deg, #E2E8F0 ${pctVal * 3.6}deg);">
+          <span class="float-prog-num">${pctVal}%</span>
+        </div>
+        <div class="float-prog-text">
+          <span class="float-prog-label">全文翻译进度</span>
+          <span class="float-prog-val">已译 ${doneCount} / ${sents.length} 句</span>
+        </div>
+      </div>
+
       <div class="workspace-toolbar">
         <div>
           <strong style="color:var(--brand-navy);">真题阅读选项精析（Q${passage.questions[0]?.n || 21}–Q${passage.questions[passage.questions.length - 1]?.n || 25}）：</strong>

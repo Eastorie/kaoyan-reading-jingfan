@@ -1490,3 +1490,167 @@ button, input, select, textarea {
     padding: 0;
   }
 }
+
+/* =========================================================================
+   Circular Score Badges & Floating Progress Widget
+   ========================================================================= */
+
+/* Circular Score Badge in Sentence Card Top-Right */
+.sent-score-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-weight: 800;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Pending / Not yet submitted: small subtle grey circle */
+.sent-score-badge.pending {
+  background: #F1F5F9;
+  border: 2px dashed #CBD5E1;
+  color: #94A3B8;
+}
+
+.sent-score-badge.pending .badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #CBD5E1;
+}
+
+/* Submitted with High Score (>=85): Green ring & background */
+.sent-score-badge.high {
+  background: #ECFDF5;
+  border: 2.2px solid #10B981;
+  color: #047857;
+}
+
+/* Submitted with Mid Score (65-84): Yellow/Amber ring & background */
+.sent-score-badge.mid {
+  background: #FFFBEB;
+  border: 2.2px solid #F59E0B;
+  color: #B45309;
+}
+
+/* Submitted with Low Score (<65): Red ring & background */
+.sent-score-badge.low {
+  background: #FEF2F2;
+  border: 2.2px solid #EF4444;
+  color: #B91C1C;
+}
+
+.sent-score-badge .score-num {
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* Floating Full-Passage Progress Widget */
+.floating-progress-widget {
+  position: fixed;
+  top: 74px;
+  right: 18px;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(203, 213, 225, 0.85);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.1);
+  padding: 6px 12px 6px 7px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  user-select: none;
+}
+
+.floating-progress-widget:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.15);
+  border-color: var(--brand-navy);
+}
+
+.float-prog-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.float-prog-circle::before {
+  content: "";
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: #fff;
+  border-radius: 50%;
+}
+
+.float-prog-num {
+  position: relative;
+  z-index: 1;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--brand-navy-dark);
+}
+
+.float-prog-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.float-prog-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--brand-navy);
+}
+
+.float-prog-val {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+}
+
+/* Mobile Adjustments for Floating Widget */
+@media (max-width: 768px) {
+  .floating-progress-widget {
+    top: auto;
+    bottom: calc(72px + env(safe-area-inset-bottom));
+    right: 12px;
+    padding: 5px 10px 5px 6px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  }
+  .float-prog-circle {
+    width: 28px;
+    height: 28px;
+  }
+  .float-prog-circle::before {
+    width: 20px;
+    height: 20px;
+  }
+  .float-prog-num {
+    font-size: 9.5px;
+  }
+  .float-prog-label {
+    font-size: 10px;
+  }
+  .float-prog-val {
+    font-size: 11px;
+  }
+  .trans-textarea {
+    min-height: 52px;
+  }
+}
